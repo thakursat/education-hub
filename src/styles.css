@@ -21,8 +21,7 @@
 *::after {
   box-sizing: border-box;
 }
-html,
-body {
+html {
   overflow-x: clip;
 }
 html {
@@ -225,7 +224,7 @@ address {
 .nav a[aria-current='page'] {
   color: var(--blue);
 }
-body.nav-open {
+html.nav-open {
   overflow: hidden;
 }
 

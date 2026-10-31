@@ -13,6 +13,7 @@
       burger.setAttribute('aria-expanded', String(open));
       burger.setAttribute('aria-label', open ? 'Close menu' : 'Open menu');
       document.body.classList.toggle('nav-open', open);
+      document.documentElement.classList.toggle('nav-open', open);
     };
     burger.addEventListener('click', function () {
       setOpen(!nav.classList.contains('open'));
