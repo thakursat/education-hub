@@ -5,17 +5,22 @@
   var burger = document.getElementById('burger');
   var nav = document.getElementById('nav');
   if (burger && nav) {
-    burger.addEventListener('click', function () {
-      var open = nav.classList.toggle('open');
+    var setOpen = function (open) {
+      nav.classList.toggle('open', open);
       burger.setAttribute('aria-expanded', String(open));
       burger.setAttribute('aria-label', open ? 'Close menu' : 'Open menu');
       document.body.classList.toggle('nav-open', open);
+    };
+    burger.addEventListener('click', function () {
+      setOpen(!nav.classList.contains('open'));
     });
     nav.addEventListener('click', function (e) {
-      if (e.target.closest('a')) {
-        nav.classList.remove('open');
-        burger.setAttribute('aria-expanded', 'false');
-        document.body.classList.remove('nav-open');
+      if (e.target.closest('a')) setOpen(false);
+    });
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape' && nav.classList.contains('open')) {
+        setOpen(false);
+        burger.focus();
       }
     });
   }

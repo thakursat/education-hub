@@ -17,6 +17,17 @@ const addressLine = `${SITE.address.street}, ${SITE.address.locality}, ${SITE.ad
 
 const pages = [];
 
+// Inlined into every page: one round trip to first paint on slow mobile networks.
+const CSS = fs
+  .readFileSync(path.join(SRC, 'styles.css'), 'utf8')
+  .replace(/\/\*[\s\S]*?\*\//g, '')
+  .replace(/\s+/g, ' ')
+  .replace(/\s*([{}:;,>])\s*/g, '$1')
+  .replace(/;}/g, '}')
+  .trim();
+// Only the logo wordmark uses a web font; display=optional means it never causes a layout shift.
+const FONT_URL = 'https://fonts.googleapis.com/css2?family=Cinzel:wght@700&display=optional';
+
 // ---------- Structured data ----------
 
 const orgId = abs('/#organization');
@@ -44,9 +55,33 @@ const businessSchema = {
   },
   geo: { '@type': 'GeoCoordinates', latitude: SITE.geo.lat, longitude: SITE.geo.lng },
   openingHours: SITE.hours,
+  hasMap: `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${SITE.address.street}, Lucknow ${SITE.address.postalCode}`)}`,
+  contactPoint: {
+    '@type': 'ContactPoint',
+    telephone: SITE.phone,
+    contactType: 'customer service',
+    areaServed: 'IN',
+    availableLanguage: ['English', 'Hindi'],
+  },
   areaServed: [{ '@type': 'City', name: 'Lucknow' }, ...areas.map((a) => ({ '@type': 'Place', name: `${a.name}, Lucknow` }))],
+  knowsAbout: [...subjects.map((s) => s.name), ...boards.map((b) => b.name), ...exams.map((e) => e.short)],
+  hasOfferCatalog: {
+    '@type': 'OfferCatalog',
+    name: 'Home tuition services',
+    itemListElement: subjects.map((s) => ({
+      '@type': 'Offer',
+      itemOffered: { '@type': 'Service', name: `${s.name} home tuition`, url: abs(`/subjects/${s.slug}/`) },
+    })),
+  },
   sameAs: Object.values(SITE.social).filter(Boolean),
 };
+
+const itemListSchema = (name, items) => ({
+  '@context': 'https://schema.org',
+  '@type': 'ItemList',
+  name,
+  itemListElement: items.map(([n, u], i) => ({ '@type': 'ListItem', position: i + 1, name: n, url: abs(u) })),
+});
 
 const websiteSchema = {
   '@context': 'https://schema.org',
@@ -109,8 +144,8 @@ function header(current) {
 </div>
 <header class="hdr" id="top">
   <div class="wrap hdr__in">
-    <a class="brand" href="/" aria-label="${esc(SITE.name)} — home">
-      <img src="/assets/emblem-160.jpg" width="56" height="42" alt="" fetchpriority="high">
+    <a class="brand" href="/" title="${esc(SITE.name)} — home">
+      <img src="/assets/emblem-112.jpg" width="56" height="42" alt="" fetchpriority="high">
       <span class="brand__txt"><b>Education <em>Hub</em></b><small>Home Tutors</small></span>
     </a>
     <nav class="nav" id="nav" aria-label="Main">
@@ -129,7 +164,7 @@ function footer() {
 <footer class="ftr">
   <div class="wrap ftr__grid">
     <div class="ftr__col ftr__brand">
-      <img src="/assets/logo-512.jpg" width="160" height="160" alt="${esc(SITE.name)} logo" loading="lazy">
+      <img src="/assets/logo-240.jpg" width="120" height="120" alt="${esc(SITE.name)} logo" loading="lazy" decoding="async">
       <p>Verified home tutors for every class, board and subject across Lucknow. Free demo class, transparent fees.</p>
       <address>
         <strong>${esc(SITE.name)}</strong><br>
@@ -302,7 +337,7 @@ const areaChips = (list = areas) => `
 
 // ---------- Page shell ----------
 
-function page({ url, title, description, h1, body, crumbs, schema = [], current, ogType = 'website', noindex = false }) {
+function page({ url, title, description, h1, body, crumbs, schema = [], current, ogType = 'website', noindex = false, lastmod }) {
   const schemas = [businessSchema, websiteSchema, ...(crumbs ? [breadcrumbSchema(crumbs)] : []), ...schema];
   const html = `<!doctype html>
 <html lang="${SITE.lang}">
@@ -312,7 +347,9 @@ function page({ url, title, description, h1, body, crumbs, schema = [], current,
 <title>${esc(title)}</title>
 <meta name="description" content="${esc(description)}">
 <link rel="canonical" href="${abs(url)}">
-<meta name="robots" content="${noindex ? 'noindex, follow' : 'index, follow, max-image-preview:large'}">
+<link rel="alternate" hreflang="en-IN" href="${abs(url)}">
+<link rel="alternate" hreflang="x-default" href="${abs(url)}">
+<meta name="robots" content="${noindex ? 'noindex, follow' : 'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1'}">
 <meta name="theme-color" content="#0b2a6f">
 <meta name="geo.region" content="IN-UP">
 <meta name="geo.placename" content="Lucknow">
@@ -323,21 +360,22 @@ function page({ url, title, description, h1, body, crumbs, schema = [], current,
 <meta property="og:title" content="${esc(title)}">
 <meta property="og:description" content="${esc(description)}">
 <meta property="og:url" content="${abs(url)}">
-<meta property="og:image" content="${abs('/assets/logo-full.jpg')}">
-<meta property="og:image:width" content="1254">
-<meta property="og:image:height" content="1254">
+<meta property="og:image" content="${abs('/assets/og-1200x630.jpg')}">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="${esc(SITE.name)} logo">
 <meta property="og:locale" content="en_IN">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="${esc(title)}">
 <meta name="twitter:description" content="${esc(description)}">
-<meta name="twitter:image" content="${abs('/assets/logo-full.jpg')}">
+<meta name="twitter:image" content="${abs('/assets/og-1200x630.jpg')}">
 <link rel="icon" type="image/png" href="/assets/favicon.png">
 <link rel="apple-touch-icon" href="/assets/apple-touch-icon.png">
 <link rel="manifest" href="/site.webmanifest">
-<link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/styles.css">
+<link rel="stylesheet" href="${FONT_URL}" media="print" onload="this.media='all'">
+<noscript><link rel="stylesheet" href="${FONT_URL}"></noscript>
+<style>${CSS}</style>
 ${schemas.map((s) => `<script type="application/ld+json">${JSON.stringify(s)}</script>`).join('\n')}
 </head>
 <body>
@@ -352,7 +390,7 @@ ${footer()}
 </body>
 </html>
 `;
-  pages.push({ url, html, noindex });
+  pages.push({ url, html, noindex, lastmod });
 }
 
 // ---------- Home ----------
@@ -475,6 +513,16 @@ ${steps}
   </div>
 </section>
 
+<section class="sec sec--alt" aria-labelledby="seo-h">
+  <div class="wrap narrow prose">
+    <h2 id="seo-h">Home tuition in Lucknow — how Education Hub helps</h2>
+    <p>Searching for a <strong>home tutor near me in Lucknow</strong> usually means calling a dozen numbers and hoping someone reliable turns up. Education Hub Home Tutors makes it simple: one call or WhatsApp message to <a href="${tel}">${SITE.phoneDisplay}</a>, and we shortlist a verified tutor who suits your child's class, board, subjects and timing.</p>
+    <p>We arrange <a href="/classes/">home tuition for every class</a> — from <a href="/classes/nursery/">nursery</a> and <a href="/classes/ukg/">UKG</a> to <a href="/classes/class-10/">Class 10</a> and <a href="/classes/class-12/">Class 12</a> — across <a href="/boards/cbse/">CBSE</a>, <a href="/boards/icse/">ICSE</a>, <a href="/boards/up-board/">UP Board</a>, <a href="/boards/ib/">IB</a> and <a href="/boards/igcse/">IGCSE</a>. Senior students get dedicated <a href="/exams/jee/">JEE</a>, <a href="/exams/neet/">NEET</a> and <a href="/exams/cuet/">CUET</a> tutors, and adults can join one-to-one <a href="/subjects/spoken-english/">spoken English</a> classes.</p>
+    <p>Our office is at ${esc(addressLine)}, close to Sitapur Road, Aliganj and Kapoorthala, and our tutors travel across the city — <a href="/areas/gomti-nagar/">Gomti Nagar</a>, <a href="/areas/indira-nagar/">Indira Nagar</a>, <a href="/areas/jankipuram/">Jankipuram</a>, <a href="/areas/mahanagar/">Mahanagar</a>, <a href="/areas/alambagh/">Alambagh</a>, <a href="/areas/ashiyana/">Ashiyana</a> and <a href="/areas/">many more areas</a>.</p>
+    <p lang="hi"><strong>लखनऊ में होम ट्यूटर चाहिए?</strong> Education Hub आपके घर पर अनुभवी और वेरिफाइड ट्यूटर भेजता है — कक्षा 1 से 12, CBSE, ICSE, UP Board, JEE और NEET के लिए। पहली डेमो क्लास बिल्कुल फ्री है। कॉल या WhatsApp करें: ${SITE.phoneDisplay}।</p>
+  </div>
+</section>
+
 ${faqBlock(faqs)}
 ${ctaBand('Give your child the tutor they deserve')}
 `,
@@ -489,6 +537,12 @@ page({
   description:
     'Hire expert home tutors in Lucknow for Maths, Physics, Chemistry, Biology, English, Hindi, Computer Science, Accounts and more. Free demo class.',
   h1: 'Subject-wise home tutors in Lucknow',
+  schema: [
+    itemListSchema(
+      'Subjects',
+      subjects.map((s) => [`${s.name} home tutor`, `/subjects/${s.slug}/`]),
+    ),
+  ],
   crumbs: [
     ['Home', '/'],
     ['Subjects', '/subjects/'],
@@ -556,6 +610,12 @@ page({
   title: 'Class-wise Home Tutors in Lucknow | Nursery to Class 12, JEE, NEET',
   description: 'Home tutors in Lucknow for Play Group, Nursery, LKG, UKG, Class 1 to 12, JEE, NEET, diploma and college subjects. Book a free demo class.',
   h1: 'Class-wise home tutors in Lucknow',
+  schema: [
+    itemListSchema(
+      'Classes',
+      classes.map((c) => [`${c.name} home tutor`, `/classes/${c.slug}/`]),
+    ),
+  ],
   crumbs: [
     ['Home', '/'],
     ['Classes', '/classes/'],
@@ -614,6 +674,8 @@ for (const c of classes) {
     ${subjectCards(relevant)}
     <h2>Boards we cover</h2>
     <p>${boards.map((b) => `<a href="/boards/${b.slug}/">${b.name}</a>`).join(' · ')}</p>
+    <h2>${c.name} tutors near you</h2>
+    ${areaChips(areas.slice(0, 9))}
   </article>
   <aside class="sticky">${leadForm(`${c.name} tutor`)}</aside>
 </div></section>
@@ -709,6 +771,12 @@ page({
   title: 'Home Tutors Near Me in Lucknow | All Areas Covered | Education Hub',
   description: 'Find a home tutor near you in Lucknow — Triveni Nagar, Aliganj, Gomti Nagar, Indira Nagar, Jankipuram, Mahanagar, Alambagh and more.',
   h1: 'Home tutors near you in Lucknow',
+  schema: [
+    itemListSchema(
+      'Areas served in Lucknow',
+      areas.map((a) => [`Home tutor in ${a.name}`, `/areas/${a.slug}/`]),
+    ),
+  ],
   crumbs: [
     ['Home', '/'],
     ['Areas', '/areas/'],
@@ -946,6 +1014,12 @@ page({
   title: 'Study Tips & Parenting Guides | Education Hub Blog',
   description: 'Practical study tips, board exam plans and guides for Lucknow parents choosing a home tutor.',
   h1: 'Education Hub blog',
+  schema: [
+    itemListSchema(
+      'Blog posts',
+      posts.map((p) => [p.title, `/blog/${p.slug}/`]),
+    ),
+  ],
   crumbs: [
     ['Home', '/'],
     ['Blog', '/blog/'],
@@ -964,6 +1038,7 @@ for (const p of posts) {
     url,
     current: '/blog/',
     ogType: 'article',
+    lastmod: p.date,
     title: p.title,
     description: p.description,
     crumbs: [
@@ -1078,7 +1153,6 @@ for (const p of pages) {
 }
 
 fs.cpSync(path.join(SRC, 'assets'), path.join(DIST, 'assets'), { recursive: true });
-fs.copyFileSync(path.join(SRC, 'styles.css'), path.join(DIST, 'styles.css'));
 fs.writeFileSync(path.join(DIST, 'main.js'), fs.readFileSync(path.join(SRC, 'main.js'), 'utf8').replace('__WHATSAPP__', SITE.whatsapp));
 fs.copyFileSync(path.join(SRC, 'jobs.json'), path.join(DIST, 'jobs.json'));
 
@@ -1087,7 +1161,7 @@ fs.writeFileSync(
   path.join(DIST, 'sitemap.xml'),
   `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-${sitemapUrls.map((p) => `  <url><loc>${abs(p.url)}</loc><lastmod>${BUILD_DATE}</lastmod><priority>${p.url === '/' ? '1.0' : p.url.split('/').length > 3 ? '0.7' : '0.8'}</priority></url>`).join('\n')}
+${sitemapUrls.map((p) => `  <url><loc>${abs(p.url)}</loc><lastmod>${p.lastmod || BUILD_DATE}</lastmod><priority>${p.url === '/' ? '1.0' : p.url.split('/').length > 3 ? '0.7' : '0.8'}</priority></url>`).join('\n')}
 </urlset>
 `,
 );
@@ -1119,6 +1193,27 @@ fs.writeFileSync(
     null,
     2,
   ),
+);
+
+fs.writeFileSync(
+  path.join(DIST, 'llms.txt'),
+  `# ${SITE.name}
+
+> Verified one-to-one home tutors in Lucknow, Uttar Pradesh, India for Play Group to Class 12, CBSE, ICSE, UP Board, IB, IGCSE, NIOS, JEE, NEET, CUET and Spoken English. Free demo class.
+
+- Phone / WhatsApp: ${SITE.phoneDisplay} (${SITE.phone})
+- Address: ${addressLine}
+- Hours: ${SITE.hoursDisplay}
+
+## Key pages
+- [Book a free demo](${abs('/get-tutor/')})
+- [Fees](${abs('/fees/')})
+- [Subjects](${abs('/subjects/')}): ${subjects.map((s) => s.name).join(', ')}
+- [Classes](${abs('/classes/')})
+- [Areas served](${abs('/areas/')}): ${areas.map((a) => a.name).join(', ')}
+- [Become a tutor](${abs('/become-a-tutor/')})
+- [Contact](${abs('/contact/')})
+`,
 );
 
 console.log(`Built ${pages.length} pages → ${path.relative(process.cwd(), DIST) || DIST}`);

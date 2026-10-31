@@ -13,7 +13,7 @@
   --wa: #25d366;
   --r: 14px;
   --shadow: 0 6px 24px rgba(11, 42, 111, 0.08);
-  --font: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --font: system-ui, -apple-system, 'Segoe UI', Roboto, 'Noto Sans', 'Helvetica Neue', Arial, sans-serif;
   --serif: 'Cinzel', Georgia, serif;
 }
 *,
@@ -900,7 +900,10 @@ body.nav-open {
   padding: 0;
   margin: 0;
   display: grid;
-  gap: 6px;
+}
+.ftr li a {
+  display: inline-block;
+  padding: 7px 0;
 }
 .ftr a {
   color: #b8c6e3;
@@ -961,7 +964,7 @@ body.nav-open {
   color: var(--navy);
 }
 .dock__wa {
-  color: #128c4b;
+  color: #0b6b37;
 }
 .dock__demo {
   background: linear-gradient(135deg, var(--blue), var(--navy));
