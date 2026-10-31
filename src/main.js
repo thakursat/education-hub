@@ -121,16 +121,43 @@
     });
   });
 
-  // Tuition jobs are kept in /jobs.json so they can be updated without rebuilding the site.
-  var jobsEl = document.getElementById('jobs');
-  if (jobsEl) {
-    var empty = document.getElementById('jobs-empty');
-    var esc = function (s) {
-      var p = document.createElement('p');
-      p.textContent = s == null ? '' : String(s);
-      return p.innerHTML;
-    };
-    fetch(jobsEl.getAttribute('data-jobs-src'))
+  var esc = function (s) {
+    var p = document.createElement('p');
+    p.textContent = s == null ? '' : String(s);
+    return p.innerHTML;
+  };
+
+  function jobCard(j) {
+    var msg = 'Hi Education Hub 👋 I want to apply for Job ID ' + j.id + ' (' + j.title + ').';
+    return (
+      '<article class="job"><div class="job__top"><span class="tag">ID #' +
+      esc(j.id) +
+      '</span><span class="job__status"><span class="pulse"></span>Active</span></div>' +
+      '<h3>' +
+      esc(j.title) +
+      '</h3><p>📍 ' +
+      esc(j.area) +
+      '</p><dl>' +
+      (j.budget ? '<div><dt>Budget</dt><dd>' + esc(j.budget) + '</dd></div>' : '') +
+      '<div><dt>Tutor</dt><dd>' +
+      esc(j.gender || 'Any') +
+      '</dd></div>' +
+      '<div><dt>Mode</dt><dd>' +
+      esc(j.mode || 'Home') +
+      '</dd></div>' +
+      (j.subjects ? '<div><dt>Subjects</dt><dd>' + esc(j.subjects) + '</dd></div>' : '') +
+      '</dl><a class="btn" href="https://wa.me/' +
+      WA +
+      '?text=' +
+      encodeURIComponent(msg) +
+      '" target="_blank" rel="noopener">Apply on WhatsApp</a></article>'
+    );
+  }
+
+  // Tuition jobs live in /jobs.json so they can be updated without rebuilding the site.
+  document.querySelectorAll('[data-jobs-src]').forEach(function (el) {
+    var empty = document.getElementById(el.id + '-empty');
+    fetch(el.getAttribute('data-jobs-src'))
       .then(function (r) {
         return r.ok ? r.json() : [];
       })
@@ -141,37 +168,101 @@
         jobs = (jobs || []).filter(function (j) {
           return j.active !== false;
         });
-        if (!jobs.length) {
-          empty.hidden = false;
-          return;
-        }
-        jobsEl.innerHTML = jobs
-          .map(function (j) {
-            var msg = 'Hi Education Hub 👋 I want to apply for Job ID ' + j.id + ' (' + j.title + ').';
-            return (
-              '<article class="job"><span class="tag">ID #' +
-              esc(j.id) +
-              '</span><h2>' +
-              esc(j.title) +
-              '</h2>' +
-              '<p>📍 ' +
-              esc(j.area) +
-              '</p><div class="job__meta">' +
-              (j.budget ? '<span>💰 ' + esc(j.budget) + '</span>' : '') +
-              (j.gender ? '<span>👤 ' + esc(j.gender) + '</span>' : '') +
-              (j.subjects ? '<span>📚 ' + esc(j.subjects) + '</span>' : '') +
-              '<span>🏠 ' +
-              esc(j.mode || 'Home') +
-              '</span></div>' +
-              '<a class="btn" href="https://wa.me/' +
-              WA +
-              '?text=' +
-              encodeURIComponent(msg) +
-              '" target="_blank" rel="noopener">Apply on WhatsApp</a></article>'
-            );
-          })
-          .join('');
-        empty.hidden = false;
+        var limit = parseInt(el.getAttribute('data-limit'), 10);
+        if (limit) jobs = jobs.slice(0, limit);
+        if (empty) empty.hidden = false;
+        if (!jobs.length) return;
+        el.innerHTML = jobs.map(jobCard).join('');
+        var nav = document.querySelector('[data-carousel-nav="' + el.id + '"]');
+        if (nav) nav.hidden = false;
       });
+  });
+
+  document.querySelectorAll('[data-carousel-nav]').forEach(function (nav) {
+    nav.addEventListener('click', function (e) {
+      var btn = e.target.closest('button[data-dir]');
+      var track = document.getElementById(nav.getAttribute('data-carousel-nav'));
+      if (!btn || !track || !track.firstElementChild) return;
+      var step = track.firstElementChild.getBoundingClientRect().width + 14;
+      track.scrollBy({ left: step * Number(btn.getAttribute('data-dir')), behavior: 'smooth' });
+    });
+  });
+
+  // Dropdown toggles: needed for touch and keyboard; desktop hover is handled in CSS.
+  document.querySelectorAll('.sub-toggle').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var sub = document.getElementById(btn.getAttribute('aria-controls'));
+      var open = !sub.classList.contains('open');
+      document.querySelectorAll('.sub.open').forEach(function (o) {
+        if (o !== sub) {
+          o.classList.remove('open');
+          document.querySelector('[aria-controls="' + o.id + '"]').setAttribute('aria-expanded', 'false');
+        }
+      });
+      sub.classList.toggle('open', open);
+      btn.setAttribute('aria-expanded', String(open));
+    });
+  });
+
+  var reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  var word = document.querySelector('[data-rotate]');
+  if (word && !reduceMotion) {
+    var words = word.getAttribute('data-rotate').split('|');
+    var w = 0;
+    setInterval(function () {
+      word.classList.add('out');
+      setTimeout(function () {
+        w = (w + 1) % words.length;
+        word.textContent = words[w];
+        word.classList.remove('out');
+      }, 250);
+    }, 2200);
+  }
+
+  // Counters render their final value in HTML (for no-JS and crawlers) and only animate when scrolled into view.
+  var counters = document.querySelectorAll('[data-count]');
+  if (counters.length && 'IntersectionObserver' in window && !reduceMotion) {
+    var io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (en) {
+        if (!en.isIntersecting) return;
+        io.unobserve(en.target);
+        var el = en.target;
+        var end = Number(el.getAttribute('data-count'));
+        var t0 = performance.now();
+        (function tick(t) {
+          var k = Math.min((t - t0) / 1200, 1);
+          el.textContent = Math.round(end * (1 - Math.pow(1 - k, 3)));
+          if (k < 1) requestAnimationFrame(tick);
+        })(t0);
+      });
+    });
+    counters.forEach(function (c) {
+      io.observe(c);
+    });
+  }
+
+  var welcome = document.getElementById('welcome');
+  if (welcome && welcome.showModal && window.matchMedia('(min-width: 1000px)').matches) {
+    var seen = false;
+    try {
+      seen = sessionStorage.getItem('eh-welcome') === '1';
+    } catch {
+      seen = true;
+    }
+    if (!seen) {
+      setTimeout(function () {
+        if (document.querySelector('dialog[open]')) return;
+        welcome.showModal();
+        try {
+          sessionStorage.setItem('eh-welcome', '1');
+        } catch {
+          /* storage blocked: popup just shows again next visit */
+        }
+      }, 8000);
+    }
+    welcome.addEventListener('click', function (e) {
+      if (e.target === welcome || e.target.closest('[data-close]')) welcome.close();
+    });
   }
 })();

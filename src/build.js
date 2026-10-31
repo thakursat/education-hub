@@ -3,7 +3,8 @@
 
 const fs = require('fs');
 const path = require('path');
-const { SITE, subjects, classes, boards, exams, areas, faqs, fees, posts } = require('./data');
+const { homeScene, tutorScene } = require('./illustrations');
+const { SITE, subjects, classes, boards, exams, areas, faqs, fees, posts, testimonials } = require('./data');
 
 const SRC = __dirname;
 const DIST = path.join(SRC, '..', 'dist');
@@ -131,8 +132,34 @@ const nav = [
   ['Contact', '/contact/'],
 ];
 
+// Nav items that open a dropdown (desktop: hover/focus, mobile: tap to expand inside the menu panel).
+const navSubs = {
+  '/subjects/': ['Browse by subject', subjects.slice(0, 8).map((s) => [`${s.icon} ${s.name}`, `/subjects/${s.slug}/`]), ['All subjects →', '/subjects/']],
+  '/classes/': [
+    'Browse by class',
+    [
+      ...classes
+        .filter((c) => ['nursery', 'class-1', 'class-5', 'class-8', 'class-9', 'class-10', 'class-11', 'class-12'].includes(c.slug))
+        .map((c) => [c.name, `/classes/${c.slug}/`]),
+      ...exams.slice(0, 2).map((e) => [e.short, `/exams/${e.slug}/`]),
+    ],
+    ['All classes →', '/classes/'],
+  ],
+  '/areas/': ['Tutors near you', areas.slice(0, 8).map((a) => [`📍 ${a.name}`, `/areas/${a.slug}/`]), ['All areas →', '/areas/']],
+};
+
 function header(current) {
-  const links = nav.map(([n, u]) => `<li><a href="${u}"${u === current ? ' aria-current="page"' : ''}>${n}</a></li>`).join('');
+  const links = nav
+    .map(([n, u]) => {
+      const cur = u === current ? ' aria-current="page"' : '';
+      const sub = navSubs[u];
+      if (!sub) return `<li><a href="${u}"${cur}>${n}</a></li>`;
+      const [label, items, all] = sub;
+      const id = `sub-${u.replace(/\//g, '')}`;
+      return `<li class="has-sub"><a href="${u}"${cur}>${n}</a><button class="sub-toggle" aria-expanded="false" aria-controls="${id}" aria-label="Show ${n} menu"><span aria-hidden="true">▾</span></button>
+<div class="sub" id="${id}"><p class="sub__label">${label}</p><ul>${items.map(([t, h]) => `<li><a href="${h}">${esc(t)}</a></li>`).join('')}</ul><a class="sub__all" href="${all[1]}">${all[0]}</a></div></li>`;
+    })
+    .join('');
   return `
 <a class="skip" href="#main">Skip to content</a>
 <div class="topbar">
@@ -274,16 +301,82 @@ const ctaBand = (title = 'Ready to find the right tutor?') => `
   </div>
 </section>`;
 
+const marqueeItems = [
+  '🛡️ 100% verified tutors',
+  '🎁 Free demo class',
+  '⚡ Tutor matched in 24 hours',
+  '📚 CBSE · ICSE · UP Board · IB · IGCSE',
+  '🎯 JEE & NEET specialists',
+  '👩‍🏫 Female & male tutors',
+  '🔁 Free tutor replacement',
+  '📍 Tutors across Lucknow',
+];
+// The list is rendered twice so the CSS loop is seamless; the copy is hidden from screen readers.
+const marquee = `
+<div class="marquee" role="region" aria-label="Why parents choose us">
+  <div class="marquee__track">
+    <ul>${marqueeItems.map((m) => `<li>${m}</li>`).join('')}</ul>
+    <ul aria-hidden="true">${marqueeItems.map((m) => `<li>${m}</li>`).join('')}</ul>
+  </div>
+</div>`;
+
+// Renders nothing until real parent reviews are added to data.js.
+const testimonialsBlock = () =>
+  testimonials.length
+    ? `
+<section class="sec" aria-labelledby="testi-h">
+  <div class="wrap">
+    <div class="sec__head">
+      <div><p class="eyebrow">Testimonials</p><h2 class="h2" id="testi-h">What parents say</h2></div>
+      <div class="carousel__nav" data-carousel-nav="testi"><button type="button" data-dir="-1" aria-label="Previous review">←</button><button type="button" data-dir="1" aria-label="Next review">→</button></div>
+    </div>
+    <div class="carousel" id="testi">${testimonials
+      .map(
+        (t) =>
+          `<figure class="quote"><div class="quote__stars" aria-label="${t.rating} out of 5">${'★'.repeat(t.rating)}${'☆'.repeat(5 - t.rating)}</div><blockquote>${esc(t.text)}</blockquote><figcaption><b>${esc(t.name)}</b><span>${esc(t.detail)}</span></figcaption></figure>`,
+      )
+      .join('')}</div>
+  </div>
+</section>`
+    : '';
+
+const finalCta = `
+<section class="final">
+  <div class="wrap final__in">
+    <p class="pill pill--dark">📅 Book today — free demo within 24 hours</p>
+    <h2>Start your child's learning journey with <span>Education Hub</span></h2>
+    <p>Verified, experienced home tutors across Lucknow. No advance payment, no risk — just a free demo class at your home.</p>
+    <div class="final__btns">
+      <a class="btn btn--light" href="/get-tutor/">Book Free Demo Now</a>
+      <a class="btn btn--ghost" href="${tel}">📞 Call ${SITE.phoneDisplay}</a>
+    </div>
+    <ul class="final__ticks"><li>100% free demo</li><li>No advance payment</li><li>Replace tutor anytime</li><li>Verified &amp; safe</li></ul>
+  </div>
+</section>`;
+
+// Shown once per visit on desktop only — Google penalises pop-ups that cover content on mobile.
+const welcome = `
+<dialog class="welcome" id="welcome" aria-labelledby="welcome-h">
+  <button class="welcome__x" type="button" data-close aria-label="Close">✕</button>
+  <img src="/assets/emblem-112.jpg" width="72" height="54" alt="" loading="lazy">
+  <h2 id="welcome-h">Welcome to <span>Education Hub</span></h2>
+  <p>Looking for the right tutor, or want to start teaching? Choose your path.</p>
+  <div class="welcome__grid">
+    <a class="welcome__opt" href="/get-tutor/"><span>👨‍👩‍👧</span><b>Hire a tutor</b><small>Verified tutors for home &amp; online classes</small></a>
+    <a class="welcome__opt" href="/become-a-tutor/"><span>🧑‍🏫</span><b>Join as a tutor</b><small>Get tuition jobs near your home</small></a>
+  </div>
+</dialog>`;
+
 const steps = `
 <section class="sec sec--alt" aria-labelledby="how-h">
   <div class="wrap">
     <p class="eyebrow">How it works</p>
     <h2 class="h2" id="how-h">Your tutor in four easy steps</h2>
     <ol class="steps">
-      <li><b>1</b><h3>Tell us your need</h3><p>Share class, subjects, board and area by form, call or WhatsApp.</p></li>
-      <li><b>2</b><h3>We match a tutor</h3><p>We shortlist a verified tutor who fits your needs and timing.</p></li>
-      <li><b>3</b><h3>Free demo class</h3><p>Meet the tutor at home. Continue only if you are happy.</p></li>
-      <li><b>4</b><h3>Regular classes</h3><p>Classes begin with monthly feedback and easy tutor change if needed.</p></li>
+      <li><b>1</b><span class="steps__ic" aria-hidden="true">📝</span><h3>Tell us your need</h3><p>Share class, subjects, board and area by form, call or WhatsApp.</p></li>
+      <li><b>2</b><span class="steps__ic" aria-hidden="true">🤝</span><h3>We match a tutor</h3><p>We shortlist a verified tutor who fits your needs and timing.</p></li>
+      <li><b>3</b><span class="steps__ic" aria-hidden="true">🏠</span><h3>Free demo class</h3><p>Meet the tutor at home. Continue only if you are happy.</p></li>
+      <li><b>4</b><span class="steps__ic" aria-hidden="true">🚀</span><h3>Regular classes</h3><p>Classes begin with monthly feedback and easy tutor change if needed.</p></li>
     </ol>
   </div>
 </section>`;
@@ -386,6 +479,7 @@ ${h1 ? `<section class="phero"><div class="wrap"><h1>${h1}</h1>${description ? `
 ${body}
 </main>
 ${footer()}
+${welcome}
 <script src="/main.js" defer></script>
 </body>
 </html>
@@ -406,20 +500,28 @@ page({
 <section class="hero">
   <div class="wrap hero__grid">
     <div class="hero__copy">
-      <p class="pill">⭐ Lucknow's friendly home tutor network</p>
+      <p class="pill"><span class="pulse" aria-hidden="true"></span> Tutors available across Lucknow today</p>
       <h1>Best <span class="hl">Home Tutors in Lucknow</span> — at your doorstep</h1>
+      <p class="rotator" aria-live="off">Trusted by families for <span class="rotator__word" data-rotate="CBSE students|ICSE students|UP Board students|JEE aspirants|NEET aspirants|IB &amp; IGCSE|Class 1 to 12|Spoken English">CBSE students</span></p>
       <p class="lede">One-to-one home tuition for <strong>Play Group to Class 12</strong>, <strong>CBSE, ICSE, UP Board, IB & IGCSE</strong>, plus <strong>JEE, NEET</strong> and Spoken English. Tell us what your child needs and we'll send a verified tutor for a <strong>free demo class</strong>.</p>
-      <ul class="ticks">
-        <li>Free demo class</li><li>Verified tutors</li><li>Male & female tutors</li><li>No hidden fees</li>
+      <ul class="badges">
+        <li>🎁 Free demo class</li><li>🛡️ Verified tutors</li><li>💸 No hidden fees</li><li>⚡ 24-hr response</li>
       </ul>
       <div class="hero__btns">
-        <a class="btn btn--primary" href="#lead">Book Free Demo</a>
+        <a class="btn btn--accent" href="#lead">Book Free Demo</a>
         <a class="btn btn--outline" href="${tel}">📞 ${SITE.phoneDisplay}</a>
       </div>
+      <dl class="stats">
+        <div><dt>Subjects</dt><dd><span data-count="${subjects.length}">${subjects.length}</span>+</dd></div>
+        <div><dt>Class levels</dt><dd><span data-count="${classes.length}">${classes.length}</span></dd></div>
+        <div><dt>Boards</dt><dd><span data-count="${boards.length}">${boards.length}</span></dd></div>
+        <div><dt>Demo arranged</dt><dd><span data-count="24">24</span>h</dd></div>
+      </dl>
     </div>
     <div class="hero__form">${leadForm('Homepage hero')}</div>
   </div>
 </section>
+${marquee}
 ${trustStrip}
 
 <section class="sec" aria-labelledby="who-h">
@@ -450,6 +552,25 @@ ${trustStrip}
   </div>
 </section>
 
+<section class="sec" aria-labelledby="jobs-h">
+  <div class="wrap">
+    <div class="sec__head">
+      <div>
+        <p class="eyebrow"><span class="pulse" aria-hidden="true"></span> Actively hiring</p>
+        <h2 class="h2" id="jobs-h">Latest home tuition jobs in Lucknow</h2>
+      </div>
+      <div class="carousel__nav" data-carousel-nav="home-jobs" hidden>
+        <button type="button" data-dir="-1" aria-label="Previous jobs">←</button><button type="button" data-dir="1" aria-label="Next jobs">→</button>
+      </div>
+    </div>
+    <div class="carousel" id="home-jobs" data-jobs-src="/jobs.json" data-limit="8" aria-live="polite"></div>
+    <div class="tutor-band">
+      <div><h3>Are you a tutor?</h3><p>Get tuition jobs near your home sent straight to WhatsApp — free registration.</p></div>
+      <div class="tutor-band__btns"><a class="btn btn--light" href="/become-a-tutor/">Register as Tutor</a><a class="btn btn--ghost" href="/tuition-jobs/">View all jobs</a></div>
+    </div>
+  </div>
+</section>
+
 ${steps}
 
 <section class="sec" aria-labelledby="cls-h">
@@ -461,7 +582,7 @@ ${steps}
   </div>
 </section>
 
-<section class="sec sec--alt" aria-labelledby="brd-h">
+<section class="sec sec--mint" aria-labelledby="brd-h">
   <div class="wrap">
     <p class="eyebrow">Boards</p>
     <h2 class="h2" id="brd-h">Every major board covered</h2>
@@ -486,8 +607,15 @@ ${steps}
   </div>
 </section>
 
-<section class="sec" aria-labelledby="why-h">
-  <div class="wrap why">
+<section class="sec sec--lav" aria-labelledby="why-h">
+  <div class="wrap visual-band">
+    <div class="illo-wrap">
+      ${homeScene}
+      <span class="float float--a"><i>🛡️</i>Verified tutor</span>
+      <span class="float float--b"><i>⭐</i>Free demo class</span>
+      <span class="float float--c"><i>📈</i>Better marks</span>
+    </div>
+    <div class="why">
     <div>
       <p class="eyebrow">Why Education Hub</p>
       <h2 class="h2" id="why-h">Learning that actually fits your child</h2>
@@ -501,6 +629,7 @@ ${steps}
       <li><b>Progress you can see</b><span>Regular tests and parent feedback so you always know where things stand.</span></li>
       <li><b>Easy replacements</b><span>Not the right fit? We'll arrange another tutor at no extra cost.</span></li>
     </ul>
+    </div>
   </div>
 </section>
 
@@ -523,8 +652,9 @@ ${steps}
   </div>
 </section>
 
+${testimonialsBlock()}
 ${faqBlock(faqs)}
-${ctaBand('Give your child the tutor they deserve')}
+${finalCta}
 `,
 });
 
@@ -547,7 +677,7 @@ page({
     ['Home', '/'],
     ['Subjects', '/subjects/'],
   ],
-  body: `<section class="sec"><div class="wrap">${subjectCards()}</div></section>${steps}${ctaBand()}`,
+  body: `<section class="sec"><div class="wrap"><p class="eyebrow">All subjects</p><h2 class="h2">Choose a subject to find your tutor</h2>${subjectCards()}</div></section>${steps}${ctaBand()}`,
 });
 
 for (const s of subjects) {
@@ -620,7 +750,7 @@ page({
     ['Home', '/'],
     ['Classes', '/classes/'],
   ],
-  body: `<section class="sec"><div class="wrap">${classGrid()}</div></section>${steps}${ctaBand()}`,
+  body: `<section class="sec"><div class="wrap"><p class="eyebrow">All classes</p><h2 class="h2">Pick your child's class</h2>${classGrid()}</div></section>${steps}${ctaBand()}`,
 });
 
 const feeFor = (c) => {
@@ -847,6 +977,7 @@ page({
   body: `
 <section class="sec"><div class="wrap split">
   <article class="prose">
+    ${homeScene}
     <h2>Our story</h2>
     <p>Education Hub Home Tutors started in Triveni Nagar, Lucknow with a simple idea: finding a good tutor shouldn't depend on luck or on who your neighbour knows. Parents deserve a reliable way to find someone qualified, safe and genuinely invested in their child's progress.</p>
     <p>Today we work with teachers and subject experts across Lucknow — from patient pre-primary educators to senior JEE and NEET faculty — and match them carefully with families who need them.</p>
@@ -894,6 +1025,7 @@ page({
   body: `
 <section class="sec"><div class="wrap split">
   <article class="prose">
+    ${tutorScene}
     <h2>Why teach with us</h2>
     <ul class="ticks">
       <li>Tuition leads close to where you live</li>

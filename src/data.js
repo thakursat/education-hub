@@ -719,4 +719,7 @@ const posts = [
   },
 ];
 
-module.exports = { SITE, subjects, classes, boards, exams, areas, faqs, fees, posts };
+// Real parent reviews only (name, area/class detail, 1–5 rating). The section stays hidden while this is empty.
+const testimonials = [];
+
+module.exports = { SITE, subjects, classes, boards, exams, areas, faqs, fees, posts, testimonials };

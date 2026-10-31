@@ -65,3 +65,11 @@ test('sitemap lists every indexable page and excludes the 404', () => {
   assert.ok(!sitemap.includes('404'));
   assert.match(fs.readFileSync(path.join(DIST, 'robots.txt'), 'utf8'), /Sitemap: https:\/\//);
 });
+
+test('home page has the interactive sections and hides empty testimonials', () => {
+  const home = fs.readFileSync(path.join(DIST, 'index.html'), 'utf8');
+  for (const marker of ['class="marquee"', 'data-rotate=', 'data-count=', 'id="home-jobs"', 'class="sub"', 'id="welcome"', 'class="final"']) {
+    assert.ok(home.includes(marker), marker);
+  }
+  assert.ok(!home.includes('id="testi"'), 'testimonials section should not render without real reviews');
+});
