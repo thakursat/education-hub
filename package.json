@@ -1,0 +1,20 @@
+{
+  "name": "education-hub-home-tutors",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Education Hub Home Tutors — static, SEO-first website for home tuition in Lucknow",
+  "scripts": {
+    "build": "node src/build.js",
+    "start": "node src/build.js && npx --yes serve dist -l 4321",
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "test": "node --test"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.39.5",
+    "eslint": "^9.39.5",
+    "globals": "^15.15.0",
+    "prettier": "^3.9.10"
+  }
+}
