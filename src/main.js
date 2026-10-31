@@ -5,7 +5,10 @@
   var burger = document.getElementById('burger');
   var nav = document.getElementById('nav');
   if (burger && nav) {
+    var header = document.querySelector('.hdr');
     var setOpen = function (open) {
+      // The top bar scrolls away, so the menu starts wherever the header's bottom edge is right now.
+      if (open) nav.style.setProperty('--nav-top', header.getBoundingClientRect().bottom + 'px');
       nav.classList.toggle('open', open);
       burger.setAttribute('aria-expanded', String(open));
       burger.setAttribute('aria-label', open ? 'Close menu' : 'Open menu');
@@ -22,6 +25,18 @@
         setOpen(false);
         burger.focus();
       }
+    });
+  }
+
+  // On pages that already have the booking form, the dock's "Free Demo" jumps to it instead of loading /get-tutor/.
+  var demo = document.querySelector('.dock__demo');
+  var lead = document.getElementById('lead');
+  if (demo && lead) {
+    demo.addEventListener('click', function (e) {
+      e.preventDefault();
+      lead.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      var first = lead.querySelector('input[name="name"]');
+      if (first) first.focus({ preventScroll: true });
     });
   }
 
