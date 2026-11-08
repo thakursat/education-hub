@@ -707,3 +707,12 @@ address {
     scroll-behavior: auto !important;
   }
 }
+
+.card__art .photo {
+  border-radius: 12px 12px 0 0;
+  aspect-ratio: 4 / 3;
+}
+.cover .photo {
+  border-radius: 16px;
+  aspect-ratio: 16 / 9;
+}

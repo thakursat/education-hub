@@ -600,10 +600,16 @@ const areaChips = (list = areas) => `
 
 // Photo slots: drop a file into src/assets/photos/ with the given name and it replaces the illustration on the next build.
 const PHOTOS = path.join(SRC, 'assets', 'photos');
-const photo = (file, alt, fallback) =>
-  fs.existsSync(path.join(PHOTOS, file))
-    ? `<img class="photo" src="/assets/photos/${file}" alt="${esc(alt)}" width="800" height="600" loading="lazy" decoding="async">`
-    : fallback;
+// If <name>-480.webp and <name>-900.webp sit next to the JPG, phones get the small WebP and the JPG stays as fallback.
+// Pass eager for a photo that is the first thing on screen, so it isn't lazy-loaded.
+const photo = (file, alt, fallback, eager = false, sizes = '(max-width: 640px) 92vw, 420px') => {
+  if (!fs.existsSync(path.join(PHOTOS, file))) return fallback;
+  const img = `<img class="photo" src="/assets/photos/${file}" alt="${esc(alt)}" width="900" height="675" ${eager ? 'fetchpriority="high"' : 'loading="lazy"'} decoding="async">`;
+  const base = file.replace(/\.\w+$/, '');
+  const webp = [480, 900].filter((w) => fs.existsSync(path.join(PHOTOS, `${base}-${w}.webp`)));
+  if (webp.length < 2) return img;
+  return `<picture class="photo"><source type="image/webp" srcset="${webp.map((w) => `/assets/photos/${base}-${w}.webp ${w}w`).join(', ')}" sizes="${sizes}">${img}</picture>`;
+};
 
 // Dark inner-page hero: copy and contact buttons on the left, the booking form on the right.
 // `accent` tints the glow and highlights, like the reference site's per-page theme colour.
@@ -649,7 +655,7 @@ const sideCard = (art, name) => `
 
 // ---------- Page shell ----------
 
-function page({ url, title, description, h1, body, crumbs, schema = [], current, ogType = 'website', noindex = false, lastmod, art, hero }) {
+function page({ url, title, description, h1, body, crumbs, schema = [], current, ogType = 'website', noindex = false, lastmod, art, hero, image }) {
   const schemas = [businessSchema, websiteSchema, ...(crumbs ? [breadcrumbSchema(crumbs)] : []), ...schema];
   const html = `<!doctype html>
 <html lang="${SITE.lang}">
@@ -672,15 +678,15 @@ function page({ url, title, description, h1, body, crumbs, schema = [], current,
 <meta property="og:title" content="${esc(title)}">
 <meta property="og:description" content="${esc(description)}">
 <meta property="og:url" content="${abs(url)}">
-<meta property="og:image" content="${abs('/assets/og-1200x630.jpg')}">
-<meta property="og:image:width" content="1200">
-<meta property="og:image:height" content="630">
-<meta property="og:image:alt" content="${esc(SITE.name)} logo">
+<meta property="og:image" content="${abs(image ? image.src : '/assets/og-1200x630.jpg')}">
+<meta property="og:image:width" content="${image ? 900 : 1200}">
+<meta property="og:image:height" content="${image ? 675 : 630}">
+<meta property="og:image:alt" content="${esc(image ? image.alt : `${SITE.name} logo`)}">
 <meta property="og:locale" content="en_IN">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="${esc(title)}">
 <meta name="twitter:description" content="${esc(description)}">
-<meta name="twitter:image" content="${abs('/assets/og-1200x630.jpg')}">
+<meta name="twitter:image" content="${abs(image ? image.src : '/assets/og-1200x630.jpg')}">
 <link rel="icon" type="image/png" href="/assets/favicon.png">
 <link rel="apple-touch-icon" href="/assets/apple-touch-icon.png">
 <link rel="manifest" href="/site.webmanifest">
@@ -917,7 +923,7 @@ ${tutorsBlock()}
   <div class="tht-container">
     <div class="tht-about__grid">
       <div class="tht-about__visual">
-        <div class="tht-about__img">${photo('about.jpg', `${SITE.name} — home tuition in Lucknow`, homeScene)}</div>
+        <div class="tht-about__img">${photo('about.jpg', `${SITE.name} — home tuition in Lucknow`, homeScene, false, '(max-width: 1024px) 92vw, 560px')}</div>
         <div class="tht-about__badge"><div class="badge-num">24h</div><div class="badge-text">Tutor Match</div></div>
       </div>
       <div class="tht-about__content">
@@ -1584,13 +1590,15 @@ page({
   body: `<section class="sec"><div class="wrap"><div class="cards cards--3">${posts
     .map(
       (p, i) =>
-        `<a class="card card--post" href="/blog/${p.slug}/"><div class="card__art">${postArt(p, i)}</div><time datetime="${p.date}">${new Date(p.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</time><h2 class="h3">${esc(p.title)}</h2><p>${esc(p.description)}</p><span class="card__more">Read more →</span></a>`,
+        `<a class="card card--post" href="/blog/${p.slug}/"><div class="card__art">${photo(`blog-${p.slug}.jpg`, p.title, postArt(p, i))}</div><time datetime="${p.date}">${new Date(p.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</time><h2 class="h3">${esc(p.title)}</h2><p>${esc(p.description)}</p><span class="card__more">Read more →</span></a>`,
     )
     .join('')}</div></div></section>`,
 });
 
 for (const [i, p] of posts.entries()) {
   const url = `/blog/${p.slug}/`;
+  // A post with a cover photo uses it for link previews and the article's structured data.
+  const cover = fs.existsSync(path.join(PHOTOS, `blog-${p.slug}.jpg`)) ? { src: `/assets/photos/blog-${p.slug}.jpg`, alt: p.title } : null;
   page({
     url,
     current: '/blog/',
@@ -1598,6 +1606,7 @@ for (const [i, p] of posts.entries()) {
     lastmod: p.date,
     title: p.title,
     description: p.description,
+    image: cover,
     crumbs: [
       ['Home', '/'],
       ['Blog', '/blog/'],
@@ -1614,7 +1623,7 @@ for (const [i, p] of posts.entries()) {
         url: abs(url),
         mainEntityOfPage: abs(url),
         inLanguage: SITE.lang,
-        image: abs('/assets/logo-full.jpg'),
+        image: abs(cover ? cover.src : '/assets/logo-full.jpg'),
         author: { '@id': orgId },
         publisher: { '@id': orgId },
       },
@@ -1622,7 +1631,7 @@ for (const [i, p] of posts.entries()) {
     body: `
 <article class="sec"><div class="wrap narrow prose">
   <h1>${esc(p.title)}</h1>
-  <div class="cover">${postArt(p, i)}</div>
+  <div class="cover">${photo(`blog-${p.slug}.jpg`, p.title, postArt(p, i), true, '(max-width: 800px) 100vw, 760px')}</div>
   <p class="meta"><time datetime="${p.date}">${new Date(p.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })}</time> · ${esc(SITE.name)}</p>
   ${p.body.map(([tag, text]) => `<${tag}>${esc(text)}</${tag}>`).join('\n  ')}
 </div></article>
