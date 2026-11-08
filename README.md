@@ -12,7 +12,7 @@ Static, SEO-first, mobile-first site for home tuition in Lucknow. No framework, 
 - Business details, subjects, classes, boards, areas, fees, FAQs, blog posts: `src/data.js`
 - **Before going live, set `SITE.url` in `src/data.js` to the real domain** (canonicals, sitemap, schema use it). Also set `SITE.email` and `SITE.social`.
 - Tuition jobs: edit `src/jobs.json` (array of `{ id, title, area, budget, gender, subjects, mode, active }`), rebuild.
-- Layout/templates: `src/build.js` · styles: `src/styles.css` · forms/menu: `src/main.js`
+- Layout/templates: `src/build.js` · styles: `src/theme.css` (visual theme, header, home sections, footer) and `src/styles.css` (inner-page components) · forms/menu/animations: `src/main.js`
 
 ## Deploy
 

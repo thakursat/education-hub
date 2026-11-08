@@ -3,17 +3,12 @@
   var WA = '__WHATSAPP__';
 
   var burger = document.getElementById('burger');
-  var nav = document.getElementById('nav');
+  var nav = document.getElementById('mainNavCollapse');
   if (burger && nav) {
-    var header = document.querySelector('.hdr');
     var setOpen = function (open) {
-      // The top bar scrolls away, so the menu starts wherever the header's bottom edge is right now.
-      if (open) nav.style.setProperty('--nav-top', header.getBoundingClientRect().bottom + 'px');
       nav.classList.toggle('open', open);
       burger.setAttribute('aria-expanded', String(open));
       burger.setAttribute('aria-label', open ? 'Close menu' : 'Open menu');
-      document.body.classList.toggle('nav-open', open);
-      document.documentElement.classList.toggle('nav-open', open);
     };
     burger.addEventListener('click', function () {
       setOpen(!nav.classList.contains('open'));
@@ -29,16 +24,13 @@
     });
   }
 
-  // On pages that already have the booking form, the dock's "Free Demo" jumps to it instead of loading /get-tutor/.
-  var demo = document.querySelector('.dock__demo');
-  var lead = document.getElementById('lead');
-  if (demo && lead) {
-    demo.addEventListener('click', function (e) {
-      e.preventDefault();
-      lead.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      var first = lead.querySelector('input[name="name"]');
-      if (first) first.focus({ preventScroll: true });
-    });
+  var mainNav = document.getElementById('mainNav');
+  if (mainNav) {
+    var onScroll = function () {
+      mainNav.classList.toggle('scrolled', window.scrollY > 10);
+    };
+    window.addEventListener('scroll', onScroll, { passive: true });
+    onScroll();
   }
 
   function openWhatsApp(lines) {
@@ -130,28 +122,48 @@
 
   function jobCard(j) {
     var msg = 'Hi Education Hub 👋 I want to apply for Job ID ' + j.id + ' (' + j.title + ').';
+    var item = function (label, val, cls) {
+      return (
+        '<div class="job-live-item"><span class="job-live-label">' +
+        label +
+        '</span><span class="job-live-val' +
+        (cls ? ' ' + cls : '') +
+        '">' +
+        val +
+        '</span></div>'
+      );
+    };
     return (
-      '<article class="job"><div class="job__top"><span class="tag">ID #' +
+      '<article class="job-live-card"><div class="job-live-card__header"><div class="job-live-card__header-inner"><div class="job-live-badge"><span class="job-live-dot"></span>Actively Hiring</div><div class="job-live-id">ID #' +
       esc(j.id) +
-      '</span><span class="job__status"><span class="pulse"></span>Active</span></div>' +
-      '<h3>' +
+      '</div></div></div><div class="job-live-card__body"><h3 class="job-live-title">' +
       esc(j.title) +
-      '</h3><p>📍 ' +
+      '</h3><div class="job-live-loc"><i class="fa-solid fa-location-dot" aria-hidden="true"></i> ' +
       esc(j.area) +
-      '</p><dl>' +
-      (j.budget ? '<div><dt>Budget</dt><dd>' + esc(j.budget) + '</dd></div>' : '') +
-      '<div><dt>Tutor</dt><dd>' +
-      esc(j.gender || 'Any') +
-      '</dd></div>' +
-      '<div><dt>Mode</dt><dd>' +
-      esc(j.mode || 'Home') +
-      '</dd></div>' +
-      (j.subjects ? '<div><dt>Subjects</dt><dd>' + esc(j.subjects) + '</dd></div>' : '') +
-      '</dl><a class="btn" href="https://wa.me/' +
+      '</div><div class="job-live-grid">' +
+      item('Budget', esc(j.budget || 'On request')) +
+      item('Tutor Preferred', esc(j.gender || 'Any')) +
+      item('Mode', esc(j.mode || 'Home / Offline')) +
+      item('Status', 'Active', 'job-live-active') +
+      '</div>' +
+      (j.subjects ? '<p class="job-live-desc">Subjects: ' + esc(j.subjects) + ' | Gender: ' + esc(j.gender || 'Any') + '</p>' : '') +
+      '</div><div class="job-live-card__footer"><a class="job-apply-btn" href="https://wa.me/' +
       WA +
       '?text=' +
       encodeURIComponent(msg) +
-      '" target="_blank" rel="noopener">Apply on WhatsApp</a></article>'
+      '" target="_blank" rel="noopener"><i class="fa-brands fa-whatsapp" aria-hidden="true"></i> Apply Now on WhatsApp</a></div></article>'
+    );
+  }
+
+  function jobPill(j) {
+    return (
+      '<a href="/tuition-jobs/" class="tht-job-pill" title="' +
+      esc(j.title) +
+      '"><span class="tht-job-pill__badge">NEW</span>' +
+      esc(j.title) +
+      ' — ' +
+      esc(j.area) +
+      '</a><span class="tht-marquee-dot" aria-hidden="true">·</span>'
     );
   }
 
@@ -171,11 +183,20 @@
         });
         var limit = parseInt(el.getAttribute('data-limit'), 10);
         if (limit) jobs = jobs.slice(0, limit);
-        if (empty) empty.hidden = false;
-        if (!jobs.length) return;
+        if (!jobs.length) {
+          if (empty) empty.hidden = false;
+          return;
+        }
         el.innerHTML = jobs.map(jobCard).join('');
         var nav = document.querySelector('[data-carousel-nav="' + el.id + '"]');
         if (nav) nav.hidden = false;
+        // The home page also scrolls the job titles in a ticker under the header; doubled for a seamless loop.
+        var strip = document.getElementById('jobs-strip');
+        if (strip) {
+          var pills = jobs.map(jobPill).join('');
+          document.getElementById('jobs-strip-track').innerHTML = pills + pills;
+          strip.hidden = false;
+        }
       });
   });
 
@@ -194,7 +215,7 @@
     btn.addEventListener('click', function () {
       var sub = document.getElementById(btn.getAttribute('aria-controls'));
       var open = !sub.classList.contains('open');
-      document.querySelectorAll('.sub.open').forEach(function (o) {
+      document.querySelectorAll('.dropdown-menu.open').forEach(function (o) {
         if (o !== sub) {
           o.classList.remove('open');
           document.querySelector('[aria-controls="' + o.id + '"]').setAttribute('aria-expanded', 'false');
@@ -207,18 +228,106 @@
 
   var reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-  var word = document.querySelector('[data-rotate]');
-  if (word && !reduceMotion) {
-    var words = word.getAttribute('data-rotate').split('|');
-    var w = 0;
+  // Hero rotator: the coloured box resizes to each word, measured with a hidden sizer span.
+  var stage = document.getElementById('rotateStage');
+  if (stage && !reduceMotion) {
+    var items = stage.querySelectorAll('.tht-rotate-item');
+    var box = document.getElementById('rotateBox');
+    var sizer = document.getElementById('rotateSizer');
+    var r = 0;
+    var fit = function () {
+      sizer.textContent = items[r].textContent;
+      var pad = parseFloat(getComputedStyle(box).paddingLeft) * 2;
+      box.style.width = sizer.getBoundingClientRect().width + pad + 'px';
+    };
+    fit();
+    // Re-measure once the web font arrives; the first measurement used the fallback font.
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(fit);
+    window.addEventListener('resize', fit);
     setInterval(function () {
-      word.classList.add('out');
+      var prev = items[r];
+      prev.classList.remove('is-active');
+      prev.classList.add('is-leaving');
+      r = (r + 1) % items.length;
+      items[r].classList.add('is-active');
+      fit();
       setTimeout(function () {
-        w = (w + 1) % words.length;
-        word.textContent = words[w];
-        word.classList.remove('out');
-      }, 250);
-    }, 2200);
+        prev.classList.remove('is-leaving');
+      }, 450);
+    }, 2400);
+  }
+
+  var typed = document.querySelector('[data-type]');
+  if (typed && !reduceMotion) {
+    var words = typed.getAttribute('data-type').split('|');
+    var wi = 0;
+    var ci = words[0].length;
+    var deleting = true;
+    (function step() {
+      var w = words[wi];
+      ci += deleting ? -1 : 1;
+      typed.textContent = w.slice(0, ci);
+      var delay = deleting ? 45 : 90;
+      if (deleting && ci === 0) {
+        deleting = false;
+        wi = (wi + 1) % words.length;
+      } else if (!deleting && ci === words[wi].length) {
+        deleting = true;
+        delay = 1800;
+      }
+      setTimeout(step, delay);
+    })();
+  }
+
+  // Sections fade up as they enter the viewport; without IntersectionObserver everything is shown at once.
+  var reveals = document.querySelectorAll('.tht-reveal, .falling-text');
+  if ('IntersectionObserver' in window && !reduceMotion) {
+    var ro = new IntersectionObserver(
+      function (entries) {
+        entries.forEach(function (en) {
+          if (!en.isIntersecting) return;
+          en.target.classList.add('is-visible');
+          ro.unobserve(en.target);
+        });
+      },
+      { rootMargin: '0px 0px -60px 0px' },
+    );
+    reveals.forEach(function (el) {
+      ro.observe(el);
+    });
+  } else {
+    reveals.forEach(function (el) {
+      el.classList.add('is-visible');
+    });
+  }
+
+  document.querySelectorAll('.tht-faq-q').forEach(function (q) {
+    q.addEventListener('click', function () {
+      var item = q.closest('.tht-faq-item');
+      var open = !item.classList.contains('is-open');
+      item.classList.toggle('is-open', open);
+      q.setAttribute('aria-expanded', String(open));
+    });
+  });
+
+  // "Refresh" shows a different dozen of the popular-search links; all of them are in the HTML for crawlers.
+  var refresh = document.getElementById('tfs-refresh-btn');
+  var linkGrid = document.getElementById('tfs-links-grid');
+  if (refresh && linkGrid) {
+    refresh.hidden = false;
+    refresh.addEventListener('click', function () {
+      var links = Array.prototype.slice.call(linkGrid.children);
+      for (var i = links.length - 1; i > 0; i--) {
+        var k = Math.floor(Math.random() * (i + 1));
+        var t = links[i];
+        links[i] = links[k];
+        links[k] = t;
+      }
+      links.forEach(function (a, n) {
+        a.hidden = n >= 12;
+        linkGrid.appendChild(a);
+      });
+    });
   }
 
   // Counters render their final value in HTML (for no-JS and crawlers) and only animate when scrolled into view.

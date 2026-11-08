@@ -68,8 +68,38 @@ test('sitemap lists every indexable page and excludes the 404', () => {
 
 test('home page has the interactive sections and hides empty testimonials', () => {
   const home = fs.readFileSync(path.join(DIST, 'index.html'), 'utf8');
-  for (const marker of ['class="marquee"', 'data-rotate=', 'data-count=', 'id="home-jobs"', 'class="sub"', 'id="welcome"', 'class="final"']) {
+  for (const marker of [
+    'class="tht-marquee-wrap"',
+    'id="rotateStage"',
+    'data-count=',
+    'data-type=',
+    'id="home-jobs"',
+    'id="jobs-strip"',
+    'id="tfs-links-grid"',
+    'id="welcome"',
+    'class="tht-cta"',
+  ]) {
     assert.ok(home.includes(marker), marker);
   }
   assert.ok(!home.includes('id="testi"'), 'testimonials section should not render without real reviews');
+});
+
+test('every page uses the shared header, footer and floating contact buttons', () => {
+  for (const { file, html } of pages) {
+    for (const marker of ['class="main-navbar"', 'id="mainNavCollapse"', 'id="footer"', 'class="gotopbtn"', 'id="gotopbtn-2"']) {
+      assert.ok(html.includes(marker), `${marker} in ${file}`);
+    }
+  }
+});
+
+test('lead forms keep the field names main.js sends to WhatsApp', () => {
+  const home = fs.readFileSync(path.join(DIST, 'index.html'), 'utf8');
+  const form = home.match(/<form class="tht-form" id="lead" data-lead[\s\S]*?<\/form>/)[0];
+  for (const name of ['name', 'phone', 'class', 'area', 'subjects', 'gender', 'context']) {
+    assert.match(form, new RegExp(`name="${name}"`), name);
+  }
+});
+
+test('no page loads assets from the reference site', () => {
+  for (const { file, html } of pages) assert.ok(!html.includes('thehometuitions'), file);
 });

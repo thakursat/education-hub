@@ -22,15 +22,19 @@ const addressLine = `${SITE.address.street}, ${SITE.address.locality}, ${SITE.ad
 const pages = [];
 
 // Inlined into every page: one round trip to first paint on slow mobile networks.
-const CSS = fs
-  .readFileSync(path.join(SRC, 'styles.css'), 'utf8')
+// styles.css holds the inner-page components; theme.css (the visual theme) loads after it and wins on conflicts.
+const CSS = ['styles.css', 'theme.css']
+  .map((f) => fs.readFileSync(path.join(SRC, f), 'utf8'))
+  .join('\n')
   .replace(/\/\*[\s\S]*?\*\//g, '')
   .replace(/\s+/g, ' ')
   .replace(/\s*([{}:;,>])\s*/g, '$1')
   .replace(/;}/g, '}')
   .trim();
-// Only the logo wordmark uses a web font; display=optional means it never causes a layout shift.
-const FONT_URL = 'https://fonts.googleapis.com/css2?family=Cinzel:wght@700&display=optional';
+// Both stylesheets load without blocking render; the system font stack covers the first paint.
+const FONT_URL =
+  'https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Sora:wght@600;700;800&family=DM+Sans:wght@400;500;600&display=swap';
+const ICONS_URL = 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css';
 
 // ---------- Structured data ----------
 
@@ -125,156 +129,223 @@ const serviceSchema = (name, description, url, area = 'Lucknow') => ({
 
 const nav = [
   ['Home', '/'],
-  ['About', '/about/'],
+  ['About Us', '/about/'],
   ['Subjects', '/subjects/'],
   ['Classes', '/classes/'],
   ['Areas', '/areas/'],
   ['Fees', '/fees/'],
   ['Tuition Jobs', '/tuition-jobs/'],
-  ['Blog', '/blog/'],
-  ['Contact', '/contact/'],
+  ['Blogs', '/blog/'],
 ];
+
+// Font Awesome names for the icon slots in menus and cards; anything unmapped falls back to a book.
+const subjectIcon = {
+  mathematics: 'fa-calculator',
+  physics: 'fa-atom',
+  chemistry: 'fa-flask',
+  biology: 'fa-dna',
+  science: 'fa-microscope',
+  english: 'fa-book-open',
+  hindi: 'fa-language',
+  'computer-science': 'fa-laptop-code',
+  accountancy: 'fa-file-invoice-dollar',
+  economics: 'fa-chart-line',
+  'social-science': 'fa-earth-asia',
+  'spoken-english': 'fa-comments',
+};
+const fa = (name, set = 'solid') => `<i class="fa-${set} ${name}" aria-hidden="true"></i>`;
+const subjectFa = (slug) => fa(subjectIcon[slug] || 'fa-book');
 
 // Nav items that open a dropdown (desktop: hover/focus, mobile: tap to expand inside the menu panel).
 const navSubs = {
-  '/subjects/': ['Browse by subject', subjects.slice(0, 8).map((s) => [`${s.icon} ${s.name}`, `/subjects/${s.slug}/`]), ['All subjects →', '/subjects/']],
+  '/subjects/': [
+    'Browse by Subject',
+    subjects.slice(0, 6).map((s) => [subjectIcon[s.slug] || 'fa-book', s.name, `/subjects/${s.slug}/`]),
+    ['Explore All Subjects →', '/subjects/'],
+  ],
   '/classes/': [
-    'Browse by class',
+    'Browse by Class',
     [
       ...classes
-        .filter((c) => ['nursery', 'class-1', 'class-5', 'class-8', 'class-9', 'class-10', 'class-11', 'class-12'].includes(c.slug))
-        .map((c) => [c.name, `/classes/${c.slug}/`]),
-      ...exams.slice(0, 2).map((e) => [e.short, `/exams/${e.slug}/`]),
+        .filter((c) => ['nursery', 'class-5', 'class-8', 'class-10', 'class-12'].includes(c.slug))
+        .map((c) => ['fa-graduation-cap', c.name, `/classes/${c.slug}/`]),
+      ...exams.slice(0, 2).map((e) => ['fa-bullseye', `${e.short} Coaching`, `/exams/${e.slug}/`]),
     ],
-    ['All classes →', '/classes/'],
+    ['Explore All Classes →', '/classes/'],
   ],
-  '/areas/': ['Tutors near you', areas.slice(0, 8).map((a) => [`📍 ${a.name}`, `/areas/${a.slug}/`]), ['All areas →', '/areas/']],
+  '/areas/': ['Find Tutors Near You', areas.slice(0, 6).map((a) => ['fa-location-dot', a.name, `/areas/${a.slug}/`]), ['Explore All Areas →', '/areas/']],
 };
+
+const waIcon = `<svg class="wa-svg" viewBox="0 0 32 32" aria-hidden="true"><circle cx="16" cy="16" r="16" fill="#25d366"/><path fill="#fff" d="M16 7a9 9 0 0 0-7.8 13.5L7 25l4.6-1.2A9 9 0 1 0 16 7zm0 16.4c-1.4 0-2.8-.4-4-1.1l-.3-.2-2.7.7.7-2.6-.2-.3A7.4 7.4 0 1 1 16 23.4zm4.1-5.5c-.2-.1-1.3-.7-1.5-.7-.2-.1-.4-.1-.5.1l-.7.9c-.1.1-.3.2-.5.1a6 6 0 0 1-3-2.6c-.2-.4.2-.4.7-1.2.1-.1 0-.3 0-.4l-.7-1.6c-.2-.4-.4-.4-.5-.4h-.4c-.2 0-.4.1-.6.3-.2.2-.8.8-.8 1.9s.8 2.2.9 2.4c.1.2 1.6 2.5 4 3.5 1.5.6 2.1.7 2.8.6.5-.1 1.3-.6 1.5-1.1.2-.5.2-.9.1-1l-.4-.3z"/></svg>`;
 
 function header(current) {
   const links = nav
     .map(([n, u]) => {
+      const active = u === current ? ' active' : '';
       const cur = u === current ? ' aria-current="page"' : '';
       const sub = navSubs[u];
-      if (!sub) return `<li><a href="${u}"${cur}>${n}</a></li>`;
+      if (!sub) return `<li class="nav-item"><a class="nav-link${active}" href="${u}"${cur}>${n}</a></li>`;
       const [label, items, all] = sub;
       const id = `sub-${u.replace(/\//g, '')}`;
-      return `<li class="has-sub"><a href="${u}"${cur}>${n}</a><button class="sub-toggle" aria-expanded="false" aria-controls="${id}" aria-label="Show ${n} menu"><span aria-hidden="true">▾</span></button>
-<div class="sub" id="${id}"><p class="sub__label">${label}</p><ul>${items.map(([t, h]) => `<li><a href="${h}">${esc(t)}</a></li>`).join('')}</ul><a class="sub__all" href="${all[1]}">${all[0]}</a></div></li>`;
+      return `<li class="nav-item dropdown"><a class="nav-link${active}" href="${u}"${cur}>${n}<span class="nav-caret" aria-hidden="true">▾</span></a><button class="sub-toggle" aria-expanded="false" aria-controls="${id}" aria-label="Show ${n} menu"><span aria-hidden="true">▾</span></button>
+<div class="dropdown-menu mega-menu" id="${id}"><div class="mega-label">${label}</div><div class="menu-list">${items
+        .map(([icon, t, h]) => `<a class="menu-card" href="${h}">${fa(icon)} ${esc(t)}</a>`)
+        .join('')}</div><div class="mega-footer"><a href="${all[1]}">${all[0]}</a></div></div></li>`;
     })
     .join('');
+  const social = Object.entries(SITE.social).filter(([, url]) => url);
   return `
 <a class="skip" href="#main">Skip to content</a>
 <div class="topbar">
-  <div class="wrap topbar__in">
-    <a href="${tel}" class="topbar__item">📞 ${SITE.phoneDisplay}</a>
-    <span class="topbar__item hide-sm">📍 Triveni Nagar, Lucknow</span>
-    <a href="/become-a-tutor/" class="topbar__item">Join as Tutor →</a>
+  <div class="tht-container">
+    <div class="tb-row">
+      <div class="tb-col">
+        <a href="${tel}" class="contact-link">${fa('fa-phone')} ${SITE.phoneDisplay}</a>
+        <span class="tb-sep">|</span>
+        <a href="${wa('Hi Education Hub, I need a home tutor in Lucknow.')}" class="wa-link" target="_blank" rel="noopener">${waIcon} ${SITE.phoneDisplay}</a>
+      </div>
+      <div class="tb-col social-links">${
+        social.length
+          ? social
+              .map(
+                ([name, url]) => `<a href="${url}" title="${name}" target="_blank" rel="noopener"><i class="fa-brands fa-${name}" aria-hidden="true"></i></a>`,
+              )
+              .join('')
+          : `<span class="tb-loc">${fa('fa-location-dot')} Triveni Nagar, Lucknow · ${esc(SITE.hoursDisplay)}</span>`
+      }</div>
+      <div class="tb-col">
+        <a href="/get-tutor/" class="tbtn tbtn-red">${fa('fa-caret-right')} Hire Tutor</a>
+        <a href="/become-a-tutor/" class="tbtn">${fa('fa-caret-right')} Join as Tutor</a>
+      </div>
+    </div>
   </div>
 </div>
-<header class="hdr" id="top">
-  <div class="wrap hdr__in">
-    <a class="brand" href="/" title="${esc(SITE.name)} — home">
-      <img src="/assets/emblem-112.jpg" width="56" height="42" alt="" fetchpriority="high">
-      <span class="brand__txt"><b>Education <em>Hub</em></b><small>Home Tutors</small></span>
-    </a>
-    <nav class="nav" id="nav" aria-label="Main">
-      <ul>${links}</ul>
-      <a class="btn btn--primary nav__cta" href="/get-tutor/">Book Free Demo</a>
-    </nav>
-    <button class="burger" id="burger" aria-label="Open menu" aria-expanded="false" aria-controls="nav"><span></span><span></span><span></span></button>
-  </div>
+<div class="gold-bar"></div>
+<header class="site-hdr" id="top">
+  <nav class="main-navbar" id="mainNav" aria-label="Main">
+    <div class="tht-container nav-in">
+      <a class="navbar-brand" href="/" title="${esc(SITE.name)} — home">
+        <span class="logo-card"><img src="/assets/emblem-112.jpg" width="56" height="42" alt="${esc(SITE.name)} logo" fetchpriority="high"></span>
+        <span class="brand-text"><span class="brand-name">${esc(SITE.name)}</span><span class="brand-tag">Lucknow's Trusted Tutors</span></span>
+      </a>
+      <a href="/get-tutor/" id="mobile-pill"><span class="blink">Get Tutor</span></a>
+      <button class="nav-toggler" id="burger" type="button" aria-controls="mainNavCollapse" aria-expanded="false" aria-label="Open menu"><span></span><span></span><span></span></button>
+      <div id="mainNavCollapse">
+        <ul class="nav-menu">${links}<li class="nav-item"><a class="nav-link btn-contact-nav" href="/contact/">Contact Us</a></li></ul>
+      </div>
+    </div>
+  </nav>
 </header>`;
 }
 
 function footer() {
-  const col = (title, items) =>
-    `<div class="ftr__col"><h3>${title}</h3><ul>${items.map(([n, u]) => `<li><a href="${u}">${esc(n)}</a></li>`).join('')}</ul></div>`;
+  const col = (title, items, extra = '') =>
+    `<div class="ft-col"><h4>${title}</h4>${items.map(([n, u, cls]) => `<a href="${u}"${cls ? ` class="${cls}"` : ''}>${esc(n)}</a>`).join('')}${extra}</div>`;
+  const classLinks = classes.map((c) => [c.name, `/classes/${c.slug}/`]);
+  const half = Math.ceil(classLinks.length / 2);
+  const classSub = (list) => `<div class="ft-class-sub">${list.map(([n, u]) => `<a href="${u}">${esc(n)}</a>`).join('')}</div>`;
   return `
-<footer class="ftr">
-  <div class="wrap ftr__grid">
-    <div class="ftr__col ftr__brand">
-      <img src="/assets/logo-240.jpg" width="120" height="120" alt="${esc(SITE.name)} logo" loading="lazy" decoding="async">
-      <p>Verified home tutors for every class, board and subject across Lucknow. Free demo class, transparent fees.</p>
-      <address>
-        <strong>${esc(SITE.name)}</strong><br>
-        ${esc(SITE.address.street)},<br>${esc(SITE.address.locality)} – ${SITE.address.postalCode}, ${esc(SITE.address.region)}<br>
-        <a href="${tel}">📞 ${SITE.phoneDisplay}</a><br>
-        <a href="mailto:${SITE.email}">✉️ ${SITE.email}</a><br>
-        🕘 ${SITE.hoursDisplay}
-      </address>
+<footer id="footer">
+  <div class="ft-rule"></div>
+  <div class="ft-brand">
+    <div class="ft-brand-row">
+      <div class="ft-logo"><a href="/"><img src="/assets/logo-240.jpg" width="70" height="70" alt="${esc(SITE.name)} logo" loading="lazy" decoding="async"></a></div>
+      <div><span class="ft-brand-tagline">${esc(SITE.tagline)}</span></div>
     </div>
+    <a href="${wa('Hi Education Hub, I need a home tutor in Lucknow.')}" class="ft-cta" target="_blank" rel="noopener">${fa('fa-whatsapp', 'brands')} Get a Tutor Today</a>
+  </div>
+  <div class="ft-grid" style="max-width:1400px;margin:0 auto;">
+    ${col('By Subject', [...subjects.slice(0, 8).map((s) => [`${s.short} Tutor`, `/subjects/${s.slug}/`]), ['All Subjects →', '/subjects/', 'ft-hl']])}
+    <div class="ft-col"><h4>By Class</h4><div class="ft-class-wrap">${classSub(classLinks.slice(0, half))}${classSub(classLinks.slice(half))}</div></div>
     ${col(
-      'Subjects',
-      subjects.slice(0, 8).map((s) => [`${s.name} Tutor`, `/subjects/${s.slug}/`]),
+      'By Board',
+      boards.map((b) => [b.name.endsWith('Board') ? b.name : `${b.name} Board`, `/boards/${b.slug}/`]),
     )}
-    ${col('Classes & Exams', [
-      ...classes
-        .filter((c) => ['class-10', 'class-12', 'class-9', 'class-11', 'class-5'].includes(c.slug))
-        .map((c) => [`${c.name} Tutor`, `/classes/${c.slug}/`]),
-      ...exams.slice(0, 2).map((e) => [`${e.short} Tutor`, `/exams/${e.slug}/`]),
-      ...boards.slice(0, 3).map((b) => [`${b.name} Tutor`, `/boards/${b.slug}/`]),
-    ])}
-    ${col(
-      'Areas',
-      areas.slice(0, 10).map((a) => [`Home Tutor in ${a.name}`, `/areas/${a.slug}/`]),
-    )}
-    ${col('Company', [
+    <div class="ft-col">
+      <h4>Preference</h4>
+      <a href="/get-tutor/" class="ft-pref-link"><span class="ft-pref-badge male">♂</span> Male Tutor</a>
+      <a href="/get-tutor/" class="ft-pref-link"><span class="ft-pref-badge female">♀</span> Female Tutor</a>
+      <div class="ft-col-divider"></div>
+      <h4 class="ft-sub-head">Fees</h4>
+      <a href="/fees/">Fee Structure</a>
+      <a href="/fees/" class="ft-hl">View Fee Chart →</a>
+    </div>
+    ${col('Exams', [...exams.map((e) => [`${e.short} Coaching`, `/exams/${e.slug}/`]), ['All Classes →', '/classes/', 'ft-hl']])}
+    ${col('Quick Links', [
+      ['Home', '/'],
       ['About Us', '/about/'],
-      ['Get a Tutor', '/get-tutor/'],
-      ['Become a Tutor', '/become-a-tutor/'],
-      ['Tuition Jobs', '/tuition-jobs/'],
-      ['Fees', '/fees/'],
-      ['Blog', '/blog/'],
+      ['Find Tutors', '/get-tutor/'],
       ['Contact', '/contact/'],
+      ['Tuition Jobs', '/tuition-jobs/'],
+      ['Blog', '/blog/'],
+      ['Join as Tutor', '/become-a-tutor/'],
+    ])}
+    ${col('Legal', [
       ['Privacy Policy', '/privacy-policy/'],
       ['Terms & Conditions', '/terms-conditions/'],
       ['Refund Policy', '/refund-policy/'],
       ['Disclaimer', '/disclaimer/'],
     ])}
+    <div class="ft-col">
+      <h4>Contact Us</h4>
+      <p>${fa('fa-phone')} <a href="${tel}">${SITE.phoneDisplay}</a></p>
+      <p>${fa('fa-whatsapp', 'brands')} <a href="${wa('Hi Education Hub, I need a home tutor in Lucknow.')}" target="_blank" rel="noopener">${SITE.phoneDisplay}</a></p>
+      <p>${fa('fa-location-dot')} <span>${esc(SITE.address.street)}, ${esc(SITE.address.locality)}, ${esc(SITE.address.region)} – ${SITE.address.postalCode}</span></p>
+      <p>${fa('fa-envelope')} <a href="mailto:${SITE.email}">${SITE.email}</a></p>
+      <p class="ft-hours">${fa('fa-clock')} ${esc(SITE.hoursDisplay)}</p>
+    </div>
   </div>
-  <div class="ftr__bottom wrap">
-    <p>© ${new Date().getFullYear()} ${esc(SITE.name)}, Lucknow. All rights reserved.</p>
-    <p class="ftr__tag">${esc(SITE.tagline)}</p>
-    <p class="ftr__credit">Created with <span aria-label="love">❤️</span> by <a href="https://www.linkedin.com/in/thakursatyam9415" target="_blank" rel="noopener">Satyam Singh</a> &amp; <a href="https://www.neosharks.in/" target="_blank" rel="noopener">Neosharks</a></p>
+  <div class="ft-bottom" style="max-width:1400px;margin:0 auto;">
+    <span>© ${new Date().getFullYear()} <span class="ft-brand-name">${esc(SITE.name)}</span> · All Rights Reserved</span>
+    <span class="ft-dev">Created with <span aria-label="love">❤️</span> by <a href="https://www.linkedin.com/in/thakursatyam9415" target="_blank" rel="noopener">Satyam Singh</a> &amp; <a href="https://www.neosharks.in/" target="_blank" rel="noopener">Neosharks</a></span>
+    <ul class="ft-legal">
+      <li><a href="/privacy-policy/">Privacy Policy</a></li>
+      <li><a href="/terms-conditions/">Terms</a></li>
+      <li><a href="/refund-policy/">Refund Policy</a></li>
+      <li><a href="/disclaimer/">Disclaimer</a></li>
+    </ul>
   </div>
 </footer>
-<div class="dock" aria-label="Quick contact">
-  <a href="${tel}" class="dock__btn dock__call">📞 Call</a>
-  <a href="${wa('Hi Education Hub, I need a home tutor in Lucknow.')}" class="dock__btn dock__wa" target="_blank" rel="noopener">💬 WhatsApp</a>
-  <a href="/get-tutor/" class="dock__btn dock__demo">🎓 Free Demo</a>
-</div>
-<a href="${wa('Hi Education Hub, I need a home tutor in Lucknow.')}" class="wa-float" target="_blank" rel="noopener" aria-label="Chat on WhatsApp">
-  <svg viewBox="0 0 32 32" width="30" height="30" aria-hidden="true"><path fill="#fff" d="M16 3a13 13 0 0 0-11.2 19.6L3 29l6.6-1.7A13 13 0 1 0 16 3zm0 23.7c-2 0-4-.6-5.7-1.6l-.4-.2-3.9 1 1-3.8-.3-.4A10.7 10.7 0 1 1 16 26.7zm5.9-8c-.3-.2-1.9-1-2.2-1-.3-.1-.5-.2-.7.1l-1 1.2c-.2.2-.4.3-.7.1a8.8 8.8 0 0 1-4.4-3.8c-.3-.6.3-.5 1-1.7.1-.2 0-.4 0-.6l-1-2.4c-.3-.6-.5-.5-.7-.5h-.6c-.2 0-.6.1-.9.4-.3.3-1.2 1.1-1.2 2.8s1.2 3.2 1.4 3.5c.2.2 2.4 3.6 5.8 5 2.1.9 3 1 4 .8.7-.1 1.9-.8 2.2-1.5.3-.7.3-1.4.2-1.5l-.6-.4z"/></svg>
-</a>`;
+<div class="gotopbtn"><a href="${wa('Hi Education Hub, I need a home tutor in Lucknow.')}" target="_blank" rel="noopener" aria-label="Chat on WhatsApp"><svg viewBox="0 0 32 32" width="30" height="30" aria-hidden="true"><path fill="#fff" d="M16 3a13 13 0 0 0-11.2 19.6L3 29l6.6-1.7A13 13 0 1 0 16 3zm0 23.7c-2 0-4-.6-5.7-1.6l-.4-.2-3.9 1 1-3.8-.3-.4A10.7 10.7 0 1 1 16 26.7zm5.9-8c-.3-.2-1.9-1-2.2-1-.3-.1-.5-.2-.7.1l-1 1.2c-.2.2-.4.3-.7.1a8.8 8.8 0 0 1-4.4-3.8c-.3-.6.3-.5 1-1.7.1-.2 0-.4 0-.6l-1-2.4c-.3-.6-.5-.5-.7-.5h-.6c-.2 0-.6.1-.9.4-.3.3-1.2 1.1-1.2 2.8s1.2 3.2 1.4 3.5c.2.2 2.4 3.6 5.8 5 2.1.9 3 1 4 .8.7-.1 1.9-.8 2.2-1.5.3-.7.3-1.4.2-1.5l-.6-.4z"/></svg></a></div>
+<div class="gotopbtn-2" id="gotopbtn-2"><a href="${tel}" aria-label="Call ${SITE.phoneDisplay}"><svg viewBox="0 0 24 24" width="26" height="26" aria-hidden="true"><path fill="#fff" d="M6.6 10.8a15.1 15.1 0 0 0 6.6 6.6l2.2-2.2c.3-.3.7-.4 1-.2 1.1.4 2.3.6 3.6.6.6 0 1 .4 1 1V20c0 .6-.4 1-1 1A17 17 0 0 1 3 4c0-.6.4-1 1-1h3.5c.6 0 1 .4 1 1 0 1.3.2 2.5.6 3.6.1.3 0 .7-.2 1z"/></svg></a></div>`;
 }
 
 const areaOptions = () => areas.map((a) => `<option>${esc(a.name)}</option>`).join('') + '<option>Other area in Lucknow</option>';
 
 const classOptions = () => classes.map((c) => `<option>${esc(c.name)}</option>`).join('');
 
-function leadForm(context = '', id = 'lead') {
+const field = (label, control) => `<label class="tht-field"><span class="tht-label">${label}</span>${control}</label>`;
+
+function formCard(title, sub, inner, footerNote = 'Average response time: <strong>under 30 minutes</strong>') {
   return `
-<form class="lead" id="${id}" data-lead novalidate>
-  <h2 class="lead__title">Book a Free Demo Class</h2>
-  <p class="lead__sub">We call back within 30 minutes during working hours.</p>
-  <input type="hidden" name="context" value="${esc(context)}">
-  <label>Parent / Student name<input name="name" autocomplete="name" required minlength="2" placeholder="e.g. Priya Sharma"></label>
-  <label>Mobile number<input name="phone" type="tel" inputmode="numeric" autocomplete="tel" required pattern="[6-9][0-9]{9}" maxlength="10" placeholder="10-digit mobile"></label>
-  <div class="lead__row">
-    <label>Class<select name="class" required><option value="">Select</option>${classOptions()}</select></label>
-    <label>Area<select name="area" required><option value="">Select</option>${areaOptions()}</select></label>
+<div class="tht-form-card">
+  <div class="tht-form-card__bar" aria-hidden="true"></div>
+  <div class="tht-form-card__body">
+    <h2 class="tht-form-card__title">${title}</h2>
+    <div class="tht-form-card__sub">${fa('fa-bolt')} ${sub}</div>
+    ${inner}
   </div>
-  <label>Subjects (optional)<input name="subjects" placeholder="e.g. Maths, Science"></label>
-  <fieldset class="lead__pref"><legend>Tutor preference</legend>
-    <label><input type="radio" name="gender" value="Any" checked> Any</label>
-    <label><input type="radio" name="gender" value="Female"> Female</label>
-    <label><input type="radio" name="gender" value="Male"> Male</label>
-  </fieldset>
+  <div class="tht-form-card__footer">${fa('fa-clock')} ${footerNote}</div>
+</div>`;
+}
+
+function leadForm(context = '', id = 'lead') {
+  return formCard(
+    'Book a Free Demo Class',
+    'We call back within 30 minutes',
+    `<form class="tht-form" id="${id}" data-lead novalidate>
+  <input type="hidden" name="context" value="${esc(context)}">
+  ${field('Your Name', '<input class="tht-input" name="name" autocomplete="name" required minlength="2" placeholder="Enter your full name">')}
+  ${field('Mobile Number', '<input class="tht-input" name="phone" type="tel" inputmode="numeric" autocomplete="tel" required pattern="[6-9][0-9]{9}" maxlength="10" placeholder="10-digit mobile number">')}
+  ${field('Class', `<select class="tht-select" name="class" required><option value="">Choose class</option>${classOptions()}</select>`)}
+  ${field('Your Area in Lucknow', `<select class="tht-select" name="area" required><option value="">Choose your locality</option>${areaOptions()}</select>`)}
+  ${field('Subjects (optional)', '<input class="tht-input" name="subjects" placeholder="e.g. Maths, Science">')}
+  ${field('Tutor Preference', '<select class="tht-select" name="gender"><option>Any</option><option>Female</option><option>Male</option></select>')}
   <p class="lead__err" role="alert" hidden></p>
-  <button class="btn btn--primary btn--block" type="submit">Get Free Demo on WhatsApp →</button>
-  <p class="lead__fine">✔ Free demo ✔ No advance payment ✔ Verified tutors</p>
-</form>`;
+  <button class="tht-submit" type="submit">${fa('fa-paper-plane')} Get Free Demo Now</button>
+  <div class="tht-form-trust">${fa('fa-shield-halved')} <span>100% Free Demo &bull; No Advance Payment &bull; Verified Tutors Only</span></div>
+</form>`,
+  );
 }
 
 const breadcrumbs = (crumbs) =>
@@ -282,154 +353,212 @@ const breadcrumbs = (crumbs) =>
     .map(([n, u], i) => (i === crumbs.length - 1 ? `<li aria-current="page">${esc(n)}</li>` : `<li><a href="${u}">${esc(n)}</a></li>`))
     .join('')}</ol></nav>`;
 
-const faqBlock = (list, title = 'Frequently Asked Questions') => `
-<section class="sec" aria-labelledby="faq-h">
-  <div class="wrap narrow">
-    <h2 class="h2" id="faq-h">${title}</h2>
-    <div class="faq">${list.map((f) => `<details><summary>${esc(f.q)}</summary><p>${esc(f.a)}</p></details>`).join('')}</div>
+// Section heading in the reference style: pill, h2 with one highlighted phrase, optional intro line.
+const secHead = (id, pill, title, hl, desc = '') => `
+<div class="tht-section__head tht-reveal">
+  <div class="tht-pill">${pill}</div>
+  <h2 class="tht-h2" id="${id}">${title} <span class="hl">${hl}</span></h2>
+  ${desc ? `<p class="tht-section-desc">${desc}</p>` : ''}
+</div>`;
+
+const faqBlock = (list, title = 'Frequently Asked') => `
+<section class="tht-section" aria-labelledby="faq-h">
+  <div class="tht-container">
+    ${secHead('faq-h', 'FAQ', esc(title), 'Questions')}
+    <div class="tht-faq-wrap tht-reveal">${list
+      .map(
+        (f, i) =>
+          `<div class="tht-faq-item${i === 0 ? ' is-open' : ''}"><button class="tht-faq-q" type="button" aria-expanded="${i === 0}">${esc(f.q)}<span class="tht-faq-icon">${fa('fa-plus')}</span></button><div class="tht-faq-a"><div class="tht-faq-a__inner">${esc(f.a)}</div></div></div>`,
+      )
+      .join('')}</div>
   </div>
 </section>`;
 
-const ctaBand = (title = 'Ready to find the right tutor?') => `
-<section class="cta">
-  <div class="wrap cta__in">
-    <div>
-      <h2>${esc(title)}</h2>
-      <p>Free demo class · Verified tutors · Replace anytime</p>
-    </div>
-    <div class="cta__btns">
-      <a class="btn btn--light" href="/get-tutor/">Book Free Demo</a>
-      <a class="btn btn--ghost" href="${tel}">Call ${SITE.phoneDisplay}</a>
+const finalCta = `
+<section class="tht-cta" aria-labelledby="cta-h">
+  <div class="tht-container">
+    <div class="tht-cta__inner">
+      <div class="tht-cta__card">
+        <div class="tht-cta__badge"><span class="tht-live-dot" aria-hidden="true"></span> Book Today — Free Demo in 24 Hours</div>
+        <h2 class="tht-cta__h2" id="cta-h">Start Your Child's<span class="cta-hl"> Learning Journey</span><br>with<span class="cta-hl-gold"> ${esc(SITE.shortName)}</span></h2>
+        <p class="tht-cta__desc">Verified, experienced home tutors across Lucknow. No upfront payment, no risk — just a free demo class at your home.</p>
+        <div class="tht-cta__stats">
+          <div class="tht-cta__stat-item"><div class="tht-cta__stat-num">${subjects.length}+</div><div class="tht-cta__stat-lbl">Subjects</div></div>
+          <div class="tht-cta__stat-item"><div class="tht-cta__stat-num">${classes.length}</div><div class="tht-cta__stat-lbl">Class Levels</div></div>
+          <div class="tht-cta__stat-item"><div class="tht-cta__stat-num">${boards.length}</div><div class="tht-cta__stat-lbl">Boards</div></div>
+          <div class="tht-cta__stat-item"><div class="tht-cta__stat-num">24hr</div><div class="tht-cta__stat-lbl">Tutor Match</div></div>
+        </div>
+        <div class="tht-cta__btns" style="margin-top:2rem;">
+          <a href="${wa('Hi Education Hub 👋 I would like to book a free demo class.')}" target="_blank" rel="noopener" class="tht-cta-btn-primary">${fa('fa-whatsapp', 'brands')} Book Free Demo Now</a>
+          <a href="${tel}" class="tht-cta-btn-secondary">${fa('fa-phone')} Call: ${SITE.phoneDisplay}</a>
+        </div>
+        <div class="tht-cta__trust">
+          <div class="tht-cta__trust-item">✔ 100% Free Demo</div>
+          <div class="tht-cta__trust-item">✔ No Advance Payment</div>
+          <div class="tht-cta__trust-item">✔ Replace Tutor Anytime</div>
+          <div class="tht-cta__trust-item">✔ Verified &amp; Safe</div>
+        </div>
+      </div>
     </div>
   </div>
 </section>`;
 
 const marqueeItems = [
-  '🛡️ 100% verified tutors',
-  '🎁 Free demo class',
-  '⚡ Tutor matched in 24 hours',
-  '📚 CBSE · ICSE · UP Board · IB · IGCSE',
-  '🎯 JEE & NEET specialists',
-  '👩‍🏫 Female & male tutors',
-  '🔁 Free tutor replacement',
-  '📍 Tutors across Lucknow',
+  ['fa-shield-halved', '100% Verified Tutors'],
+  ['fa-gift', 'Free Demo Class'],
+  ['fa-bolt', '24-Hour Tutor Match'],
+  ['fa-school', 'CBSE, ICSE, UP Board, IB'],
+  ['fa-bullseye', 'JEE &amp; NEET Specialists'],
+  ['fa-person-chalkboard', 'Female &amp; Male Tutors'],
+  ['fa-rotate', 'Free Tutor Replacement'],
+  ['fa-location-dot', 'Tutors Across Lucknow'],
 ];
-// The list is rendered twice so the CSS loop is seamless; the copy is hidden from screen readers.
+// The list is rendered twice so the CSS loop is seamless; the whole strip is decorative.
 const marquee = `
-<div class="marquee" role="region" aria-label="Why parents choose us">
-  <div class="marquee__track">
-    <ul>${marqueeItems.map((m) => `<li>${m}</li>`).join('')}</ul>
-    <ul aria-hidden="true">${marqueeItems.map((m) => `<li>${m}</li>`).join('')}</ul>
-  </div>
+<div class="tht-marquee-wrap" aria-hidden="true">
+  <div class="tht-marquee-track">${[...marqueeItems, ...marqueeItems]
+    .map(([icon, t]) => `<div class="tht-marquee-item">${fa(icon)} ${t}</div><span class="tht-marquee-dot">·</span>`)
+    .join('')}</div>
 </div>`;
 
 // Renders nothing until real parent reviews are added to data.js.
 const testimonialsBlock = () =>
   testimonials.length
     ? `
-<section class="sec" aria-labelledby="testi-h">
-  <div class="wrap">
-    <div class="sec__head">
-      <div><p class="eyebrow">Testimonials</p><h2 class="h2" id="testi-h">What parents say</h2></div>
-      <div class="carousel__nav" data-carousel-nav="testi"><button type="button" data-dir="-1" aria-label="Previous review">←</button><button type="button" data-dir="1" aria-label="Next review">→</button></div>
-    </div>
-    <div class="carousel" id="testi">${testimonials
+<section class="tht-section tht-section--alt" aria-labelledby="testi-h">
+  <div class="tht-container">
+    ${secHead('testi-h', 'Testimonials', 'What Parents', 'Say About Us', 'Real results, real families — across Lucknow.')}
+    <div class="tht-testimonials-grid" id="testi">${testimonials
       .map(
-        (t) =>
-          `<figure class="quote"><div class="quote__stars" aria-label="${t.rating} out of 5">${'★'.repeat(t.rating)}${'☆'.repeat(5 - t.rating)}</div><blockquote>${esc(t.text)}</blockquote><figcaption><b>${esc(t.name)}</b><span>${esc(t.detail)}</span></figcaption></figure>`,
+        (t, i) =>
+          `<figure class="tht-testi${i === 1 ? ' tht-testi--featured' : ''} tht-reveal"><div class="tht-testi__stars" aria-label="${t.rating} out of 5">${'★'.repeat(t.rating)}</div><blockquote class="tht-testi__text">${esc(t.text)}</blockquote><figcaption class="tht-testi__author"><div class="tht-testi__ava">${esc(
+            t.name
+              .split(' ')
+              .map((w) => w[0])
+              .join('')
+              .slice(0, 2),
+          )}</div><div><div class="tht-testi__name">${esc(t.name)}</div><div class="tht-testi__loc">${esc(t.detail)}</div></div></figcaption></figure>`,
       )
       .join('')}</div>
   </div>
 </section>`
     : '';
 
-const finalCta = `
-<section class="final">
-  <div class="wrap final__in">
-    <p class="pill pill--dark">📅 Book today — free demo within 24 hours</p>
-    <h2>Start your child's learning journey with <span>Education Hub</span></h2>
-    <p>Verified, experienced home tutors across Lucknow. No advance payment, no risk — just a free demo class at your home.</p>
-    <div class="final__btns">
-      <a class="btn btn--light" href="/get-tutor/">Book Free Demo Now</a>
-      <a class="btn btn--ghost" href="${tel}">📞 Call ${SITE.phoneDisplay}</a>
-    </div>
-    <ul class="final__ticks"><li>100% free demo</li><li>No advance payment</li><li>Replace tutor anytime</li><li>Verified &amp; safe</li></ul>
-  </div>
-</section>`;
-
 // Shown once per visit on desktop only — Google penalises pop-ups that cover content on mobile.
 const welcome = `
 <dialog class="welcome" id="welcome" aria-labelledby="welcome-h">
   <button class="welcome__x" type="button" data-close aria-label="Close">✕</button>
-  <img src="/assets/emblem-112.jpg" width="72" height="54" alt="" loading="lazy">
-  <h2 id="welcome-h">Welcome to <span>Education Hub</span></h2>
-  <p>Looking for the right tutor, or want to start teaching? Choose your path.</p>
-  <div class="welcome__grid">
-    <a class="welcome__opt" href="/get-tutor/"><span>👨‍👩‍👧</span><b>Hire a tutor</b><small>Verified tutors for home &amp; online classes</small></a>
-    <a class="welcome__opt" href="/become-a-tutor/"><span>🧑‍🏫</span><b>Join as a tutor</b><small>Get tuition jobs near your home</small></a>
+  <div class="welcome__head">
+    <div class="welcome__hi"><span>✦</span> Welcome to <span>✦</span></div>
+    <h2 class="welcome__name" id="welcome-h">Education <span>Hub</span></h2>
+    <p class="welcome__sub">Whether you're looking for the right tutor<br>or want to start teaching, choose your path below.</p>
   </div>
+  <div class="welcome__grid">
+    <div class="welcome__opt welcome__opt--hire"><div class="welcome__ic" aria-hidden="true">👨‍👩‍👧</div><div class="welcome__t">Hire a Tutor</div><div class="welcome__bar"></div><p class="welcome__d">Find verified and experienced tutors for home tuition, online classes and exam preparation.</p><a class="welcome__btn" href="/get-tutor/">Find My Tutor &nbsp;→</a></div>
+    <div class="welcome__opt welcome__opt--join"><div class="welcome__ic" aria-hidden="true">🧑‍🏫</div><div class="welcome__t">Join as a Tutor</div><div class="welcome__bar"></div><p class="welcome__d">Start teaching students near you, earn flexible income and grow your tutoring career.</p><a class="welcome__btn" href="/become-a-tutor/">Start Teaching &nbsp;→</a></div>
+  </div>
+  <div class="welcome__foot"><span>${fa('fa-shield-halved')} Verified &amp; Trusted</span><span>${fa('fa-medal')} Quality Learning</span><span>${fa('fa-lock')} Safe &amp; Secure</span></div>
 </dialog>`;
 
 const steps = `
-<section class="sec sec--alt" aria-labelledby="how-h">
-  <div class="wrap">
-    <p class="eyebrow">How it works</p>
-    <h2 class="h2" id="how-h">Your tutor in four easy steps</h2>
-    <ol class="steps">
-      <li><b>1</b><span class="steps__ic" aria-hidden="true">📝</span><h3>Tell us your need</h3><p>Share class, subjects, board and area by form, call or WhatsApp.</p></li>
-      <li><b>2</b><span class="steps__ic" aria-hidden="true">🤝</span><h3>We match a tutor</h3><p>We shortlist a verified tutor who fits your needs and timing.</p></li>
-      <li><b>3</b><span class="steps__ic" aria-hidden="true">🏠</span><h3>Free demo class</h3><p>Meet the tutor at home. Continue only if you are happy.</p></li>
-      <li><b>4</b><span class="steps__ic" aria-hidden="true">🚀</span><h3>Regular classes</h3><p>Classes begin with monthly feedback and easy tutor change if needed.</p></li>
-    </ol>
+<section class="tht-section tht-section--alt" aria-labelledby="how-h">
+  <div class="tht-container">
+    ${secHead('how-h', `${fa('fa-gears')} How It Works`, 'Simple, Fast &amp;', 'Effective', 'Four simple steps to get a verified home tutor at your doorstep in Lucknow.')}
+    <div class="tht-steps">${[
+      ['fa-file-pen', 'Submit Enquiry', 'Share class, subjects, board and your area in Lucknow by form, call or WhatsApp.'],
+      ['fa-chalkboard-user', 'Attend Free Demo', 'Meet your matched tutor and attend a free trial session — no commitment required.'],
+      ['fa-indian-rupee-sign', 'Confirm the Plan', 'Choose a plan that suits you — transparent fees, zero hidden charges.'],
+      ['fa-rocket', 'Start Learning', "Begin regular sessions with monthly feedback on your child's progress."],
+    ]
+      .map(
+        ([icon, t, d], i) =>
+          `<div class="tht-step tht-reveal${i ? ` tht-reveal-d${i}` : ''}"><div class="tht-step__num">${i + 1}</div><div class="tht-step__icon">${fa(icon)}</div><h3 class="tht-step__title">${t}</h3><p class="tht-step__desc">${d}</p></div>`,
+      )
+      .join('')}</div>
   </div>
 </section>`;
 
 const trustStrip = `
-<ul class="trust wrap">
-  <li><span>🛡️</span><b>Verified tutors</b><small>ID, address & interview</small></li>
-  <li><span>🎁</span><b>Free demo</b><small>No commitment</small></li>
-  <li><span>⚡</span><b>Fast matching</b><small>Usually within 24 hrs</small></li>
-  <li><span>🔁</span><b>Free replacement</b><small>Anytime you need</small></li>
-  <li><span>💸</span><b>Clear fees</b><small>No hidden charges</small></li>
-</ul>`;
+<section class="tht-trust-strip">
+  <div class="tht-container">
+    <div class="trust-strip-grid">${[
+      ['fa-user-check', 'Verified Tutors', 'ID, address &amp; interview'],
+      ['fa-gift', 'Free Demo', 'No commitment'],
+      ['fa-bolt', 'Quick Matching', 'Usually within 24 hours'],
+      ['fa-rotate', 'Free Replacement', 'Anytime you need'],
+      ['fa-headset', 'All 7 Days', '8 AM – 9 PM support'],
+    ]
+      .map(
+        ([icon, t, s]) =>
+          `<div class="trust-item"><div class="trust-icon">${fa(icon)}</div><div><div class="trust-title">${t}</div><div class="trust-sub">${s}</div></div></div>`,
+      )
+      .join('')}</div>
+  </div>
+</section>`;
 
 const subjectCards = (list = subjects) => `
-<div class="cards cards--sm">${list
+<div class="tht-subject-grid">${list
   .map(
-    (s) =>
-      `<a class="card" href="/subjects/${s.slug}/"><span class="card__ic" aria-hidden="true">${s.icon}</span><h3>${s.name}</h3><p>${esc(s.blurb)}</p><span class="card__more">${s.short} tutors →</span></a>`,
+    (s, i) =>
+      `<a href="/subjects/${s.slug}/" class="tht-subject-card tht-reveal${i % 3 ? ` tht-reveal-d${i % 3}` : ''}"><div class="tht-subject-card__icon">${subjectFa(s.slug)}</div><div class="tht-subject-card__name">${s.name}</div><div class="tht-subject-card__desc">${esc(clip(s.blurb, 70))}</div><div class="tht-subject-card__arrow">View ${s.short} Tutors ${fa('fa-arrow-right')}</div></a>`,
   )
   .join('')}</div>`;
 
+// Card colours follow the reference: green for pre-primary, blue/purple through school, gold/red for board years.
+const classColour = (c) => {
+  if (c.group === 'pre') return 'green';
+  if (c.group === 'higher') return c.slug === 'jee-neet' ? 'purple' : 'blue';
+  if (c.group === 'board') return ['class-9', 'class-10'].includes(c.slug) ? 'gold' : 'red';
+  return ['class-7', 'class-8'].includes(c.slug) ? 'purple' : 'blue';
+};
+const classBadge = (c) => {
+  const n = c.name.match(/\d+/);
+  if (n) return `${n[0]}${['th', 'st', 'nd', 'rd'][n[0] % 10 > 3 || Math.floor(n[0] / 10) === 1 ? 0 : n[0] % 10]}`;
+  return { 'play-group': 'Play', nursery: 'Nur', 'jee-neet': 'C', diploma: 'Dip', undergraduate: 'UG', postgraduate: 'PG' }[c.slug] || c.name;
+};
+const classCard = (c) =>
+  `<a href="/classes/${c.slug}/" class="class-card ${classColour(c)}">${c.group === 'board' ? '<span class="top-tag">BOARD</span>' : ''}<div class="class-badge">${classBadge(c)}</div><div class="class-title">${c.name}</div><div class="class-sub">${esc(c.age)}</div></a>`;
+
 const classGrid = () => {
-  const groups = [
-    ['pre', 'Pre-primary'],
-    ['primary', 'Primary (Class 1–5)'],
-    ['middle', 'Middle school (Class 6–8)'],
-    ['board', 'Board years (Class 9–12)'],
-    ['higher', 'Entrance & higher education'],
-  ];
-  return groups
+  const pick = (groups) => classes.filter((c) => groups.includes(c.group));
+  const school = pick(['primary', 'middle', 'board']);
+  return [
+    ['Pre-Primary', 'class-grid-5', [pick(['pre'])]],
+    ['School Classes — 1st to 12th', 'class-grid-6', [school.slice(0, 6), school.slice(6)]],
+    ['Higher Education Programs', 'class-grid-4', [pick(['higher'])]],
+  ]
     .map(
-      ([g, label]) =>
-        `<h3 class="h3">${label}</h3><div class="chips">${classes
-          .filter((c) => c.group === g)
-          .map((c) => `<a class="chip${g === 'board' ? ' chip--hl' : ''}" href="/classes/${c.slug}/"><b>${c.name}</b><small>${c.age}</small></a>`)
+      ([label, grid, rows]) =>
+        `<div class="class-category tht-reveal"><div class="class-cat-head"><div class="class-section-pill">${label}</div></div>${rows
+          .map((r) => `<div class="${grid}">${r.map(classCard).join('')}</div>`)
           .join('')}</div>`,
     )
     .join('');
 };
 
+const boardIcon = {
+  cbse: 'fa-building-columns',
+  icse: 'fa-book',
+  'up-board': 'fa-landmark',
+  ib: 'fa-earth-americas',
+  igcse: 'fa-globe',
+  nios: 'fa-laptop-house',
+};
 const boardCards = () => `
-<div class="cards cards--sm">${boards
+<div class="tht-boards-grid">${boards
   .map(
-    (b) =>
-      `<a class="card" href="/boards/${b.slug}/"><span class="tag">${b.badge}</span><h3>${b.name}</h3><p>${esc(b.full)}</p><span class="card__more">${b.name} tutors →</span></a>`,
+    (b, i) =>
+      `<a class="tht-board-card tht-reveal${i % 4 ? ` tht-reveal-d${i % 4}` : ''}" href="/boards/${b.slug}/"><div class="tht-board-logo">${fa(boardIcon[b.slug] || 'fa-school')}</div><div class="tht-board-name">${b.name}</div><div class="tht-board-full">${esc(b.full)}</div><div class="tht-board-badge">${b.badge}</div></a>`,
   )
   .join('')}</div>`;
 
 const areaChips = (list = areas) => `
-<div class="chips">${list.map((a) => `<a class="chip" href="/areas/${a.slug}/"><b>${a.name}</b><small>${a.zone}</small></a>`).join('')}</div>`;
+<div class="tht-locations-grid tht-reveal">${list
+  .map(
+    (a) =>
+      `<a href="/areas/${a.slug}/" class="tht-loc-card"><div class="tht-loc-card__icon">${fa('fa-location-dot')}</div><span class="tht-loc-card__name">${a.name}</span><span class="tht-loc-card__sub">${a.zone}</span></a>`,
+  )
+  .join('')}</div>`;
 
 // ---------- Page shell ----------
 
@@ -446,7 +575,7 @@ function page({ url, title, description, h1, body, crumbs, schema = [], current,
 <link rel="alternate" hreflang="en-IN" href="${abs(url)}">
 <link rel="alternate" hreflang="x-default" href="${abs(url)}">
 <meta name="robots" content="${noindex ? 'noindex, follow' : 'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1'}">
-<meta name="theme-color" content="#0b2a6f">
+<meta name="theme-color" content="#0b2c6b">
 <meta name="geo.region" content="IN-UP">
 <meta name="geo.placename" content="Lucknow">
 <meta name="geo.position" content="${SITE.geo.lat};${SITE.geo.lng}">
@@ -469,8 +598,11 @@ function page({ url, title, description, h1, body, crumbs, schema = [], current,
 <link rel="apple-touch-icon" href="/assets/apple-touch-icon.png">
 <link rel="manifest" href="/site.webmanifest">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
 <link rel="stylesheet" href="${FONT_URL}" media="print" onload="this.media='all'">
-<noscript><link rel="stylesheet" href="${FONT_URL}"></noscript>
+<link rel="stylesheet" href="${ICONS_URL}" media="print" onload="this.media='all'">
+<noscript><link rel="stylesheet" href="${FONT_URL}"><link rel="stylesheet" href="${ICONS_URL}"></noscript>
+<script>document.documentElement.classList.add('js')</script>
 <style>${CSS}</style>
 ${schemas.map((s) => `<script type="application/ld+json">${JSON.stringify(s)}</script>`).join('\n')}
 </head>
@@ -492,6 +624,25 @@ ${welcome}
 
 // ---------- Home ----------
 
+const rotateWords = [
+  'CBSE Students',
+  'ICSE Students',
+  'UP Board Exams',
+  'JEE Aspirants',
+  'NEET Aspirants',
+  'IB &amp; IGCSE',
+  'Class 1 to 12',
+  'Spoken English',
+];
+
+// Mixed list of real pages for the "popular searches" grid; the badge colour marks the page type.
+const popularLinks = [
+  ...subjects.slice(0, 6).map((s) => [`${s.name} Home Tutor in Lucknow`, `/subjects/${s.slug}/`, 'p2', 'Subject']),
+  ...areas.slice(0, 6).map((a) => [`Home Tutor in ${a.name}`, `/areas/${a.slug}/`, 'p3', 'Area']),
+  ...classes.filter((c) => c.group === 'board').map((c) => [`${c.name} Home Tutor`, `/classes/${c.slug}/`, 'p4', 'Class']),
+  ...boards.slice(0, 4).map((b) => [`${b.name} Tutor in Lucknow`, `/boards/${b.slug}/`, 'p5', 'Board']),
+];
+
 page({
   url: '/',
   current: '/',
@@ -500,163 +651,271 @@ page({
     'Find verified home tutors in Lucknow for Class 1–12, CBSE, ICSE, UP Board, IB, JEE & NEET. Free demo class at your home within 24 hours. Call 63860 05007.',
   schema: [faqSchema(faqs), serviceSchema('Home Tuition in Lucknow', 'One-to-one home tuition for all classes, boards and subjects across Lucknow.', '/')],
   body: `
-<section class="hero">
-  <div class="wrap hero__grid">
-    <div class="hero__copy">
-      <p class="pill"><span class="pulse" aria-hidden="true"></span> Tutors available across Lucknow today</p>
-      <h1>Best <span class="hl">Home Tutors in Lucknow</span> — at your doorstep</h1>
-      <p class="rotator" aria-live="off">Trusted by families for <span class="rotator__word" data-rotate="CBSE students|ICSE students|UP Board students|JEE aspirants|NEET aspirants|IB &amp; IGCSE|Class 1 to 12|Spoken English">CBSE students</span></p>
-      <p class="lede">One-to-one home tuition for <strong>Play Group to Class 12</strong>, <strong>CBSE, ICSE, UP Board, IB & IGCSE</strong>, plus <strong>JEE, NEET</strong> and Spoken English. Tell us what your child needs and we'll send a verified tutor for a <strong>free demo class</strong>.</p>
-      <ul class="badges">
-        <li>🎁 Free demo class</li><li>🛡️ Verified tutors</li><li>💸 No hidden fees</li><li>⚡ 24-hr response</li>
-      </ul>
-      <div class="hero__btns">
-        <a class="btn btn--accent" href="#lead">Book Free Demo</a>
-        <a class="btn btn--outline" href="${tel}">📞 ${SITE.phoneDisplay}</a>
-      </div>
-      <dl class="stats">
-        <div><dt>Subjects</dt><dd><span data-count="${subjects.length}">${subjects.length}</span>+</dd></div>
-        <div><dt>Class levels</dt><dd><span data-count="${classes.length}">${classes.length}</span></dd></div>
-        <div><dt>Boards</dt><dd><span data-count="${boards.length}">${boards.length}</span></dd></div>
-        <div><dt>Demo arranged</dt><dd><span data-count="24">24</span>h</dd></div>
-      </dl>
+<div class="tht-page">
+<div class="tht-jobs-top-strip" id="jobs-strip" aria-label="Live tuition job openings in Lucknow" hidden>
+  <div class="tht-container">
+    <div class="tht-jobs-top-strip__inner">
+      <div class="tht-jobs-top-strip__label"><span class="tht-jobs-top-strip__label-dot" aria-hidden="true"></span><span>Live Jobs</span></div>
+      <div class="tht-jobs-top-scroll"><div class="tht-jobs-top-track" id="jobs-strip-track"></div></div>
+      <a href="/tuition-jobs/" class="tht-jobs-top-strip__cta">${fa('fa-briefcase')} <span>View All Jobs</span> ${fa('fa-arrow-right')}</a>
     </div>
-    <div class="hero__form">${leadForm('Homepage hero')}</div>
+  </div>
+</div>
+
+<section class="tht-hero" aria-label="Hero">
+  <div class="hero-blob-1" aria-hidden="true"></div>
+  <div class="hero-blob-2" aria-hidden="true"></div>
+  <div class="hero-blob-3" aria-hidden="true"></div>
+  <div class="hero-dots" aria-hidden="true"></div>
+  <div class="tht-container">
+    <div class="tht-hero__grid">
+      <div class="tht-hero__content">
+        <div class="tht-live-badge"><span class="tht-live-dot" aria-hidden="true"></span><span>Tutors available across <strong>Lucknow</strong> today</span></div>
+        <h1 class="tht-hero__h1">
+          <span class="static-line">Best Home Tutors for</span>
+          <span class="tht-rotate-outer" aria-label="${rotateWords.join(', ')} in Lucknow">
+            <span class="tht-rotate-box" id="rotateBox">
+              <span class="tht-rotate-sizer" id="rotateSizer" aria-hidden="true">${rotateWords[0]}</span>
+              <span class="tht-rotate-stage" id="rotateStage" aria-hidden="true">${rotateWords.map((w, i) => `<span class="tht-rotate-item${i ? '' : ' is-active'}">${w}</span>`).join('')}</span>
+            </span>
+          </span>
+          <span class="brand-line">in Lucknow &mdash; ${esc(SITE.shortName)}</span>
+        </h1>
+        <p class="tht-hero__desc">Find the <strong>best home tutors in Lucknow</strong> for one-to-one learning from <strong>Play Group to Class 12</strong>. We arrange <strong>home tuition</strong> for CBSE, ICSE, UP Board, IB &amp; IGCSE with verified teachers — plus <strong>JEE &amp; NEET</strong> and Spoken English. Get a <strong>free demo class</strong> at your home within 24 hours.</p>
+        <div class="tht-hero__proof">
+          <div class="proof-chip">${fa('fa-circle-check')} Free Demo Class</div>
+          <div class="proof-chip">${fa('fa-circle-check')} Verified Tutors</div>
+          <div class="proof-chip">${fa('fa-circle-check')} No Hidden Fees</div>
+          <div class="proof-chip">${fa('fa-circle-check')} 24-hr Response</div>
+        </div>
+        <div class="tht-hero__stats" aria-label="Key numbers">
+          <div class="tht-stat"><div class="tht-stat__val"><span data-count="${subjects.length}">${subjects.length}</span><span class="suf">+</span></div><div class="tht-stat__label">Subjects Covered</div></div>
+          <div class="tht-stat"><div class="tht-stat__val"><span data-count="${classes.length}">${classes.length}</span></div><div class="tht-stat__label">Class Levels</div></div>
+          <div class="tht-stat"><div class="tht-stat__val"><span data-count="${boards.length}">${boards.length}</span></div><div class="tht-stat__label">Boards</div></div>
+          <div class="tht-stat"><div class="tht-stat__val"><span data-count="24">24</span><span class="suf">hr</span></div><div class="tht-stat__label">Demo Arranged</div></div>
+        </div>
+        <div class="tht-hero__cta-row">
+          <a href="/subjects/" class="tht-btn--explore">${fa('fa-magnifying-glass')} Explore Tutors by Subject &rarr;</a>
+        </div>
+      </div>
+      <div class="tht-hero__form-wrap">${leadForm('Homepage hero')}</div>
+    </div>
   </div>
 </section>
 ${marquee}
 ${trustStrip}
 
-<section class="sec" aria-labelledby="who-h">
-  <div class="wrap">
-    <p class="eyebrow">Choose your path</p>
-    <h2 class="h2" id="who-h">What are you looking for?</h2>
-    <div class="cards cards--3">
-      <a class="card card--role" href="/get-tutor/"><span class="card__ic">👨‍👩‍👧</span><h3>I'm a parent / student</h3><p>Get a verified, experienced tutor at home or online — matched to your class, board and schedule.</p><span class="card__more">Find a tutor →</span></a>
-      <a class="card card--role" href="/become-a-tutor/"><span class="card__ic">🧑‍🏫</span><h3>I'm a tutor</h3><p>Get regular tuition leads near your home, flexible hours and timely payments.</p><span class="card__more">Become a tutor →</span></a>
-      <a class="card card--role" href="/contact/"><span class="card__ic">🏫</span><h3>School / institute</h3><p>Need subject teachers, substitute faculty or exam-prep support? Let's talk.</p><span class="card__more">Partner with us →</span></a>
+<section class="ns" aria-labelledby="who-h">
+  <div class="ns-bg" aria-hidden="true"></div>
+  <div class="tht-container">
+    <div class="ns-inner">
+      <div class="ns-head">
+        <div class="ns-pill"><span class="ns-pill-dot"></span> Choose Your Journey</div>
+        <h2 class="ns-h2" id="who-h">Who Are You <mark>Looking For?</mark></h2>
+        <p class="ns-sub">Select your role and discover tailored solutions designed for your needs.</p>
+      </div>
+      <div class="ns-cards">${[
+        [
+          '/get-tutor/',
+          gallery[0].svg,
+          'nb1',
+          'fa-people-roof',
+          'Parents',
+          'Find trusted tutors for personalised learning, better grades and academic confidence.',
+          'Find a Tutor',
+        ],
+        [
+          '/become-a-tutor/',
+          gallery[2].svg,
+          'nb2',
+          'fa-person-chalkboard',
+          'Tutors',
+          'Connect with students near you, teach flexible hours and grow your teaching career.',
+          'Become a Tutor',
+        ],
+        [
+          '/contact/',
+          gallery[5].svg,
+          'nb3',
+          'fa-school',
+          'Institutes',
+          'Need subject teachers, substitute faculty or exam-prep support? Partner with us.',
+          'Partner With Us',
+        ],
+      ]
+        .map(
+          ([href, art, nb, icon, title, desc, cta]) =>
+            `<a href="${href}" class="ns-card"><div class="ns-card-img"><div class="ns-card-img-inner">${art}</div><div class="ns-icon-badge ${nb}-bg">${fa(icon)}</div></div><div class="ns-card-body"><div class="ns-title">${title}</div><p class="ns-desc">${desc}</p><span class="ns-btn ${nb}">${cta} <span class="ns-btn-arrow">→</span></span></div></a>`,
+        )
+        .join('')}</div>
+      <div class="ns-footer">
+        <div class="ns-footer-left">
+          <div class="ns-footer-badge"><span class="ns-footer-badge-dot"></span> Live &amp; active</div>
+          <div class="ns-footer-text">Based in Triveni Nagar, Lucknow &nbsp;·&nbsp; No hidden fees &nbsp;·&nbsp; 100% verified</div>
+        </div>
+        <div class="ns-footer-stats">
+          <div class="ns-stat"><div class="ns-stat-val">${subjects.length}+</div><div class="ns-stat-lbl">Subjects</div></div>
+          <div class="ns-stat"><div class="ns-stat-val">${classes.length}</div><div class="ns-stat-lbl">Classes</div></div>
+          <div class="ns-stat"><div class="ns-stat-val">${areas.length}+</div><div class="ns-stat-lbl">Areas</div></div>
+          <div class="ns-stat"><div class="ns-stat-val">7 days</div><div class="ns-stat-lbl">Open</div></div>
+        </div>
+      </div>
     </div>
   </div>
 </section>
 
-<section class="sec" aria-labelledby="gal-h">
-  <div class="wrap">
-    <p class="eyebrow">Ways we teach</p>
-    <h2 class="h2" id="gal-h">Learning that fits every child</h2>
-    <div class="gallery">${gallery.map((g) => `<figure class="gallery__item">${g.svg}<figcaption><b>${g.title}</b><span>${g.text}</span></figcaption></figure>`).join('')}</div>
-  </div>
-</section>
-
-<section class="sec sec--alt" aria-labelledby="finder-h">
-  <div class="wrap narrow">
-    <p class="eyebrow">Smart tutor finder</p>
-    <h2 class="h2" id="finder-h">Find the right tutor in 10 seconds</h2>
-    <form class="finder" data-finder>
-      <label>Area<select name="area"><option value="">Any area</option>${areaOptions()}</select></label>
-      <label>Class<select name="class"><option value="">Any class</option>${classOptions()}</select></label>
-      <label>Subject<select name="subject"><option value="">Any subject</option>${subjects.map((s) => `<option>${s.name}</option>`).join('')}</select></label>
-      <label>Board<select name="board"><option value="">Any board</option>${boards.map((b) => `<option>${b.name}</option>`).join('')}</select></label>
-      <label>Tutor<select name="gender"><option value="">Any</option><option>Female</option><option>Male</option></select></label>
-      <label>Mode<select name="mode"><option value="">Home</option><option>Online</option></select></label>
-      <button class="btn btn--primary btn--block" type="submit">Find My Tutor on WhatsApp →</button>
+<section class="tfs-wrap" aria-labelledby="finder-h">
+  <div class="tfs-inner">
+    <span class="tfs-label">🎯 Smart Tutor Finder</span>
+    <h2 class="tfs-title" id="finder-h">Find the <em>perfect tutor</em> for your child</h2>
+    <p class="tfs-sub">Choose as many filters as you like — the more you pick, the better the match. We'll reply on WhatsApp with a suitable tutor.</p>
+    <form class="tfs-card" data-finder>
+      <div class="tfs-grid">
+        <div class="tfs-field"><label for="tfs-area">📍 Location</label><select class="tfs-select" id="tfs-area" name="area"><option value="">Any Area</option>${areaOptions()}</select></div>
+        <div class="tfs-field"><label for="tfs-subject">✏️ Subject</label><select class="tfs-select" id="tfs-subject" name="subject"><option value="">Any Subject</option>${subjects.map((s) => `<option>${s.name}</option>`).join('')}</select></div>
+        <div class="tfs-field"><label for="tfs-board">🏫 Board</label><select class="tfs-select" id="tfs-board" name="board"><option value="">Any Board</option>${boards.map((b) => `<option>${b.name}</option>`).join('')}</select></div>
+        <div class="tfs-field"><label for="tfs-class">📚 Class</label><select class="tfs-select" id="tfs-class" name="class"><option value="">Any Class</option>${classOptions()}</select></div>
+        <div class="tfs-field"><label for="tfs-gender">👤 Gender</label><select class="tfs-select" id="tfs-gender" name="gender"><option value="">Any</option><option>Female</option><option>Male</option></select></div>
+      </div>
+      <div class="tfs-btn-row"><button class="tfs-btn" type="submit">${fa('fa-magnifying-glass')} Find My Tutor</button></div>
     </form>
+    <div class="tfs-divider"><span class="tfs-divider-text">${fa('fa-link')} Top Searchable Links</span></div>
+    <div class="tfs-links-head">
+      <span class="tfs-links-title">🔥 Popular Tutor Searches in Lucknow</span>
+      <button class="tfs-refresh-btn" id="tfs-refresh-btn" type="button" hidden>${fa('fa-rotate')} Refresh</button>
+    </div>
+    <div class="tfs-links-grid" id="tfs-links-grid">${popularLinks
+      .map(
+        ([label, href, cls, kind], i) =>
+          `<a class="tfs-link-item" href="${href}"${i >= 12 ? ' hidden' : ''}><span class="tfs-link-arrow">→</span><span style="flex:1;">${esc(label)}</span><span class="tfs-param-badge ${cls}">${kind}</span></a>`,
+      )
+      .join('')}</div>
   </div>
 </section>
 
-<section class="sec" aria-labelledby="jobs-h">
-  <div class="wrap">
-    <div class="sec__head">
-      <div>
-        <p class="eyebrow"><span class="pulse" aria-hidden="true"></span> Actively hiring</p>
-        <h2 class="h2" id="jobs-h">Latest home tuition jobs in Lucknow</h2>
+<section class="tht-live-jobs-early tht-jobs-section" aria-labelledby="jobs-h">
+  <div class="tht-container">
+    <div class="tht-live-jobs-early__head">
+      <div class="tht-live-jobs-early__head-left">
+        <div class="tht-live-jobs-early__pill">${fa('fa-briefcase')} Live Jobs</div>
+        <h2 class="tht-live-jobs-early__title" id="jobs-h">Latest Home Tuition <span>Jobs</span></h2>
       </div>
-      <div class="carousel__nav" data-carousel-nav="home-jobs" hidden>
-        <button type="button" data-dir="-1" aria-label="Previous jobs">←</button><button type="button" data-dir="1" aria-label="Next jobs">→</button>
+      <a href="/tuition-jobs/" class="tht-live-jobs-early__head-cta">Explore All Jobs →</a>
+    </div>
+    <div class="jobs-carousel-wrap tht-reveal">
+      <div class="jobs-track" id="home-jobs" data-jobs-src="/jobs.json" data-limit="9" aria-live="polite"></div>
+      <p class="jobs-empty" id="home-jobs-empty" hidden>New tuition jobs are posted here as soon as parents enquire — register as a tutor to get them on WhatsApp first.</p>
+    </div>
+    <div class="jobs-nav" data-carousel-nav="home-jobs" hidden>
+      <button class="jobs-nav-btn" type="button" data-dir="-1" aria-label="Previous jobs">←</button>
+      <div class="jobs-dots" id="home-jobs-dots"></div>
+      <button class="jobs-nav-btn" type="button" data-dir="1" aria-label="Next jobs">→</button>
+    </div>
+    <div class="jobs-cta-row tht-reveal">
+      <div class="jobs-cta-left">
+        <div class="jobs-cta-live-badge"><span class="jobs-cta-live-badge-dot"></span> Actively Hiring</div>
+        <span class="jobs-cta-label">Home Tuition Jobs in Lucknow</span>
+      </div>
+      <div class="jobs-cta-btns">
+        <a href="/become-a-tutor/" class="jobs-cta-primary">${fa('fa-user-plus')} Register as Tutor →</a>
+        <a href="${wa('Hi Education Hub 👋 I am looking for tuition jobs in Lucknow. Please share available jobs in my area.')}" target="_blank" rel="noopener" class="jobs-cta-wa">${fa('fa-whatsapp', 'brands')} Get Jobs on WhatsApp</a>
       </div>
     </div>
-    <div class="carousel" id="home-jobs" data-jobs-src="/jobs.json" data-limit="8" aria-live="polite"></div>
-    <div class="tutor-band">
-      <div><h3>Are you a tutor?</h3><p>Get tuition jobs near your home sent straight to WhatsApp — free registration.</p></div>
-      <div class="tutor-band__btns"><a class="btn btn--light" href="/become-a-tutor/">Register as Tutor</a><a class="btn btn--ghost" href="/tuition-jobs/">View all jobs</a></div>
+  </div>
+</section>
+
+<section class="tht-about" aria-labelledby="about-h">
+  <div class="tht-container">
+    <div class="tht-about__grid">
+      <div class="tht-about__visual">
+        <div class="tht-about__img">${homeScene}</div>
+        <div class="tht-about__badge"><div class="badge-num">24h</div><div class="badge-text">Tutor Match</div></div>
+      </div>
+      <div class="tht-about__content">
+        <div class="tht-about__pill">ABOUT US</div>
+        <h2 class="tht-about__h2 falling-text" id="about-h">${[
+          'Why&nbsp;',
+          `<span>${esc(SITE.shortName)}</span>&nbsp;`,
+          'is&nbsp;',
+          'Learning&nbsp;',
+          'That&nbsp;',
+          'Fits&nbsp;',
+          'Your&nbsp;',
+          'Child',
+        ]
+          .map((w) => `<span class="fall-word">${w}</span>`)
+          .join('')}</h2>
+        <p class="tht-about__desc">Every child learns differently. Some need patience, some need a push, some need someone to finally explain fractions in a way that makes sense. Based in <strong>Triveni Nagar, Lucknow</strong>, we take the time to understand your child — their pace, their goals and your family's schedule — before we suggest a verified tutor close to your home.</p>
+        <div class="tht-about__stats">
+          <div class="tht-about__stat"><div class="tht-about__stat-val">${subjects.length}+</div><div class="tht-about__stat-label">Subjects Covered</div></div>
+          <div class="tht-about__stat"><div class="tht-about__stat-val">${classes.length}</div><div class="tht-about__stat-label">Class Levels</div></div>
+          <div class="tht-about__stat"><div class="tht-about__stat-val">${boards.length}</div><div class="tht-about__stat-label">Boards</div></div>
+          <div class="tht-about__stat"><div class="tht-about__stat-val">${areas.length}+</div><div class="tht-about__stat-label">Areas Served</div></div>
+        </div>
+      </div>
     </div>
   </div>
 </section>
 
 ${steps}
 
-<section class="sec" aria-labelledby="cls-h">
-  <div class="wrap">
-    <p class="eyebrow">Classes we teach</p>
-    <h2 class="h2" id="cls-h">Home tutors for every class & level</h2>
-    <p class="sub">From a toddler's first letters to postgraduate subjects — one trusted place for the whole family.</p>
+<section class="tht-classes" aria-labelledby="cls-h">
+  <div class="tht-container">
+    <div class="tht-classes__head tht-reveal">
+      <div class="class-section-pill">Classes We Teach</div>
+      <h2 class="tht-h2" id="cls-h">Home Tutors for <span class="hl">Every Class</span> &amp; Level</h2>
+      <p class="tht-section-desc">From play group to postgraduate — find the right tutor for every stage of learning in Lucknow.</p>
+    </div>
     ${classGrid()}
   </div>
 </section>
 
-<section class="sec sec--mint" aria-labelledby="brd-h">
-  <div class="wrap">
-    <p class="eyebrow">Boards</p>
-    <h2 class="h2" id="brd-h">Every major board covered</h2>
+<section class="tht-boards-section" aria-labelledby="brd-h">
+  <div class="tht-container">
+    ${secHead('brd-h', 'Curriculum', 'All Major', 'Boards Covered', 'Our tutors know every curriculum followed in Lucknow schools.')}
     ${boardCards()}
   </div>
 </section>
 
-<section class="sec" aria-labelledby="sub-h">
-  <div class="wrap">
-    <p class="eyebrow">Subjects</p>
-    <h2 class="h2" id="sub-h">Expert tutors for every subject</h2>
-    ${subjectCards(subjects.slice(0, 8))}
-    <p class="center"><a class="btn btn--outline" href="/subjects/">See all subjects</a></p>
-  </div>
-</section>
-
-<section class="sec sec--alt" aria-labelledby="exam-h">
-  <div class="wrap">
-    <p class="eyebrow">Competitive exams</p>
-    <h2 class="h2" id="exam-h">JEE, NEET, CUET & Olympiad home coaching</h2>
-    <div class="cards cards--sm">${exams.map((e) => `<a class="card" href="/exams/${e.slug}/"><h3>${e.name}</h3><p>${e.subjects}</p><span class="card__more">${e.short} tutors →</span></a>`).join('')}</div>
-  </div>
-</section>
-
-<section class="sec sec--lav" aria-labelledby="why-h">
-  <div class="wrap visual-band">
-    <div class="illo-wrap">
-      ${homeScene}
-      <span class="float float--a"><i>🛡️</i>Verified tutor</span>
-      <span class="float float--b"><i>⭐</i>Free demo class</span>
-      <span class="float float--c"><i>📈</i>Better marks</span>
+<section class="tht-subjects-sec" aria-labelledby="sub-h">
+  <div class="tht-container">
+    <div class="tht-section__head tht-reveal">
+      <div class="tht-pill">Subjects</div>
+      <h2 class="tht-h2" id="sub-h">Expert Tutors for <span class="hl typewriter-wrap" id="subjectTypewriter" data-type="${subjects
+        .slice(0, 8)
+        .map((s) => s.name)
+        .join('|')}">${subjects[0].name}</span><span class="typewriter-cursor" aria-hidden="true"></span></h2>
+      <p class="tht-section-desc">From core academics to competitive exam prep — we have a specialist for every need.</p>
     </div>
-    <div class="why">
-    <div>
-      <p class="eyebrow">Why Education Hub</p>
-      <h2 class="h2" id="why-h">Learning that actually fits your child</h2>
-      <p>Every child learns differently. Some need patience, some need a push, some need someone to finally explain fractions in a way that makes sense. We take the time to understand your child before we suggest a tutor — not just their class and subject, but their pace, their goals and your family's schedule.</p>
-      <p>Based in <strong>Triveni Nagar, Lucknow</strong>, we work with experienced teachers, subject experts and qualified graduates across the city, so there's always someone close to you.</p>
-      <a class="btn btn--primary" href="/about/">More about us</a>
-    </div>
-    <ul class="why__list">
-      <li><b>Personal matching</b><span>We speak to you first and match by teaching style, not just availability.</span></li>
-      <li><b>Safety first</b><span>ID and address verification and a face-to-face interview for every tutor.</span></li>
-      <li><b>Progress you can see</b><span>Regular tests and parent feedback so you always know where things stand.</span></li>
-      <li><b>Easy replacements</b><span>Not the right fit? We'll arrange another tutor at no extra cost.</span></li>
-    </ul>
-    </div>
+    ${subjectCards(subjects.slice(0, 6))}
+    <div class="tht-subject-footer tht-reveal"><a href="/subjects/" class="tht-btn--subjects">${fa('fa-book-open')} Explore All Subjects</a></div>
   </div>
 </section>
 
-<section class="sec sec--alt" aria-labelledby="area-h">
-  <div class="wrap">
-    <p class="eyebrow">Service areas</p>
-    <h2 class="h2" id="area-h">Home tutors across Lucknow</h2>
-    <p class="sub">Most localities in Lucknow covered — here are some of the areas we serve most.</p>
-    ${areaChips()}
+<section class="tht-section" aria-labelledby="area-h">
+  <div class="tht-container">
+    ${secHead('area-h', 'Service Areas', 'Home Tutors Available', 'Across Lucknow', 'Most localities in Lucknow covered — find a tutor right in your neighbourhood.')}
+    ${areaChips(areas.slice(0, 12))}
+    <div class="tht-locations-footer tht-reveal"><a href="/areas/" class="tht-btn--locations">${fa('fa-map-location-dot')} Explore All Locations</a></div>
   </div>
 </section>
 
-<section class="sec sec--alt" aria-labelledby="seo-h">
-  <div class="wrap narrow prose">
-    <h2 id="seo-h">Home tuition in Lucknow — how Education Hub helps</h2>
-    <p>Searching for a <strong>home tutor near me in Lucknow</strong> usually means calling a dozen numbers and hoping someone reliable turns up. Education Hub Home Tutors makes it simple: one call or WhatsApp message to <a href="${tel}">${SITE.phoneDisplay}</a>, and we shortlist a verified tutor who suits your child's class, board, subjects and timing.</p>
+<section class="tht-section tht-section--alt" aria-labelledby="exam-h">
+  <div class="tht-container">
+    ${secHead('exam-h', 'Competitive Exams', 'JEE, NEET, CUET &amp;', 'Olympiad Coaching', 'One-to-one home coaching for entrance and olympiad exams.')}
+    <div class="tht-subject-grid">${exams
+      .map(
+        (e, i) =>
+          `<a href="/exams/${e.slug}/" class="tht-subject-card tht-reveal${i % 3 ? ` tht-reveal-d${i % 3}` : ''}"><div class="tht-subject-card__icon">${fa('fa-bullseye')}</div><div class="tht-subject-card__name">${e.name}</div><div class="tht-subject-card__desc">${esc(e.subjects)}</div><div class="tht-subject-card__arrow">View ${e.short} Tutors ${fa('fa-arrow-right')}</div></a>`,
+      )
+      .join('')}</div>
+  </div>
+</section>
+
+<section class="tht-section" aria-labelledby="seo-h">
+  <div class="tht-container prose seo-copy">
+    <h2 class="tht-h2" id="seo-h">Home tuition in Lucknow — <span class="hl">how ${esc(SITE.shortName)} helps</span></h2>
+    <p>Searching for a <strong>home tutor near me in Lucknow</strong> usually means calling a dozen numbers and hoping someone reliable turns up. ${esc(SITE.name)} makes it simple: one call or WhatsApp message to <a href="${tel}">${SITE.phoneDisplay}</a>, and we shortlist a verified tutor who suits your child's class, board, subjects and timing.</p>
     <p>We arrange <a href="/classes/">home tuition for every class</a> — from <a href="/classes/nursery/">nursery</a> and <a href="/classes/ukg/">UKG</a> to <a href="/classes/class-10/">Class 10</a> and <a href="/classes/class-12/">Class 12</a> — across <a href="/boards/cbse/">CBSE</a>, <a href="/boards/icse/">ICSE</a>, <a href="/boards/up-board/">UP Board</a>, <a href="/boards/ib/">IB</a> and <a href="/boards/igcse/">IGCSE</a>. Senior students get dedicated <a href="/exams/jee/">JEE</a>, <a href="/exams/neet/">NEET</a> and <a href="/exams/cuet/">CUET</a> tutors, and adults can join one-to-one <a href="/subjects/spoken-english/">spoken English</a> classes.</p>
     <p>Our office is at ${esc(addressLine)}, close to Sitapur Road, Aliganj and Kapoorthala, and our tutors travel across the city — <a href="/areas/gomti-nagar/">Gomti Nagar</a>, <a href="/areas/indira-nagar/">Indira Nagar</a>, <a href="/areas/jankipuram/">Jankipuram</a>, <a href="/areas/mahanagar/">Mahanagar</a>, <a href="/areas/alambagh/">Alambagh</a>, <a href="/areas/ashiyana/">Ashiyana</a> and <a href="/areas/">many more areas</a>.</p>
     <p lang="hi"><strong>लखनऊ में होम ट्यूटर चाहिए?</strong> Education Hub आपके घर पर अनुभवी और वेरिफाइड ट्यूटर भेजता है — कक्षा 1 से 12, CBSE, ICSE, UP Board, JEE और NEET के लिए। पहली डेमो क्लास बिल्कुल फ्री है। कॉल या WhatsApp करें: ${SITE.phoneDisplay}।</p>
@@ -666,6 +925,7 @@ ${steps}
 ${testimonialsBlock()}
 ${faqBlock(faqs)}
 ${finalCta}
+</div>
 `,
 });
 
@@ -688,7 +948,7 @@ page({
     ['Home', '/'],
     ['Subjects', '/subjects/'],
   ],
-  body: `<section class="sec"><div class="wrap"><p class="eyebrow">All subjects</p><h2 class="h2">Choose a subject to find your tutor</h2>${subjectCards()}</div></section>${steps}${ctaBand()}`,
+  body: `<section class="sec"><div class="wrap"><p class="eyebrow">All subjects</p><h2 class="h2">Choose a subject to find your tutor</h2>${subjectCards()}</div></section>${steps}${finalCta}`,
 });
 
 for (const [i, s] of subjects.entries()) {
@@ -740,7 +1000,7 @@ for (const [i, s] of subjects.entries()) {
 </div></section>
 <section class="sec sec--alt"><div class="wrap"><h2 class="h2">Other subjects</h2>${subjectCards(subjects.filter((x) => x.slug !== s.slug).slice(0, 4))}</div></section>
 ${faqBlock(sFaqs, `${s.name} tuition — FAQs`)}
-${ctaBand(`Book a free ${s.name} demo class`)}`,
+${finalCta}`,
   });
 }
 
@@ -762,7 +1022,7 @@ page({
     ['Home', '/'],
     ['Classes', '/classes/'],
   ],
-  body: `<section class="sec"><div class="wrap"><p class="eyebrow">All classes</p><h2 class="h2">Pick your child's class</h2>${classGrid()}</div></section>${steps}${ctaBand()}`,
+  body: `<section class="sec"><div class="wrap"><p class="eyebrow">All classes</p><h2 class="h2">Pick your child's class</h2>${classGrid()}</div></section>${steps}${finalCta}`,
 });
 
 const feeFor = (c) => {
@@ -823,7 +1083,7 @@ for (const [i, c] of classes.entries()) {
   <aside class="sticky">${leadForm(`${c.name} tutor`)}</aside>
 </div></section>
 ${faqBlock(cFaqs, `${c.name} tuition — FAQs`)}
-${ctaBand(`Book a free ${c.name} demo class`)}`,
+${finalCta}`,
   });
 }
 
@@ -861,7 +1121,7 @@ for (const [i, b] of boards.entries()) {
   <aside class="sticky">${leadForm(`${b.name} tutor`)}</aside>
 </div></section>
 <section class="sec sec--alt"><div class="wrap"><h2 class="h2">Other boards</h2>${boardCards()}</div></section>
-${ctaBand()}`,
+${finalCta}`,
   });
 }
 
@@ -904,7 +1164,7 @@ for (const [i, e] of exams.entries()) {
   <aside class="sticky">${leadForm(`${e.short} tutor`)}</aside>
 </div></section>
 ${faqBlock(eFaqs, `${e.short} coaching — FAQs`)}
-${ctaBand(`Start your ${e.short} preparation today`)}`,
+${finalCta}`,
   });
 }
 
@@ -926,7 +1186,7 @@ page({
     ['Home', '/'],
     ['Areas', '/areas/'],
   ],
-  body: `<section class="sec"><div class="wrap">${areaChips()}<p class="sub">Don't see your area? We cover most of Lucknow — <a href="/contact/">just ask</a>.</p></div></section>${ctaBand()}`,
+  body: `<section class="sec"><div class="wrap">${areaChips()}<p class="sub">Don't see your area? We cover most of Lucknow — <a href="/contact/">just ask</a>.</p></div></section>${finalCta}`,
 });
 
 for (const [i, a] of areas.entries()) {
@@ -972,7 +1232,7 @@ for (const [i, a] of areas.entries()) {
   <aside class="sticky">${leadForm(`Tutor in ${a.name}`)}</aside>
 </div></section>
 ${faqBlock(aFaqs, `Home tuition in ${a.name} — FAQs`)}
-${ctaBand(`Find your tutor in ${a.name}`)}`,
+${finalCta}`,
   });
 }
 
@@ -1010,7 +1270,7 @@ page({
   </article>
   <aside class="sticky">${leadForm('About page')}</aside>
 </div></section>
-${steps}${ctaBand()}`,
+${steps}${finalCta}`,
 });
 
 page({
@@ -1061,18 +1321,22 @@ page({
     <p>Already registered? See <a href="/tuition-jobs/">current tuition jobs</a>.</p>
   </article>
   <aside class="sticky">
-  <form class="lead" data-tutor novalidate>
-    <h2 class="lead__title">Tutor registration</h2>
-    <label>Full name<input name="name" required minlength="2" autocomplete="name"></label>
-    <label>Mobile number<input name="phone" type="tel" inputmode="numeric" required pattern="[6-9][0-9]{9}" maxlength="10"></label>
-    <label>Qualification<input name="qualification" required placeholder="e.g. M.Sc Physics, B.Ed"></label>
-    <label>Subjects you teach<input name="subjects" required placeholder="e.g. Maths, Physics"></label>
-    <label>Classes you teach<input name="classes" placeholder="e.g. Class 6–12"></label>
-    <label>Your area<select name="area" required><option value="">Select</option>${areaOptions()}</select></label>
-    <label>Experience<select name="experience"><option>Fresher</option><option>1–3 years</option><option>3–5 years</option><option>5+ years</option></select></label>
+  ${formCard(
+    'Tutor Registration',
+    'Get tuition jobs near your home',
+    `<form class="tht-form" data-tutor novalidate>
+    ${field('Full Name', '<input class="tht-input" name="name" required minlength="2" autocomplete="name" placeholder="Enter your full name">')}
+    ${field('Mobile Number', '<input class="tht-input" name="phone" type="tel" inputmode="numeric" required pattern="[6-9][0-9]{9}" maxlength="10" placeholder="10-digit mobile number">')}
+    ${field('Qualification', '<input class="tht-input" name="qualification" required placeholder="e.g. M.Sc Physics, B.Ed">')}
+    ${field('Subjects You Teach', '<input class="tht-input" name="subjects" required placeholder="e.g. Maths, Physics">')}
+    ${field('Classes You Teach', '<input class="tht-input" name="classes" placeholder="e.g. Class 6–12">')}
+    ${field('Your Area', `<select class="tht-select" name="area" required><option value="">Choose your locality</option>${areaOptions()}</select>`)}
+    ${field('Experience', '<select class="tht-select" name="experience"><option>Fresher</option><option>1–3 years</option><option>3–5 years</option><option>5+ years</option></select>')}
     <p class="lead__err" role="alert" hidden></p>
-    <button class="btn btn--primary btn--block" type="submit">Register on WhatsApp →</button>
-  </form>
+    <button class="tht-submit" type="submit">${fa('fa-whatsapp', 'brands')} Register on WhatsApp</button>
+  </form>`,
+    'Free registration for tutors across Lucknow',
+  )}
   </aside>
 </div></section>`,
 });
@@ -1123,7 +1387,7 @@ page({
     <p>These are typical ranges, not fixed prices. We always confirm the exact fee before your free demo class — no registration fee and no hidden charges.</p>
   </div>
 </div></section>
-${ctaBand('Get an exact quote for your child')}`,
+${finalCta}`,
 });
 
 page({
@@ -1217,7 +1481,7 @@ for (const [i, p] of posts.entries()) {
   <p class="meta"><time datetime="${p.date}">${new Date(p.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })}</time> · ${esc(SITE.name)}</p>
   ${p.body.map(([tag, text]) => `<${tag}>${esc(text)}</${tag}>`).join('\n  ')}
 </div></article>
-${ctaBand()}`,
+${finalCta}`,
   });
 }
 
