@@ -585,6 +585,222 @@ const areas = [
   },
 ];
 
+// Per-class study guide: key topics by subject (following NCERT / CBSE where it applies) and the usual sticking point.
+// Gives each class page its own substance instead of a shared template.
+const classGuide = {
+  'play-group': {
+    topics: [
+      'Colours, shapes and sizes',
+      'Rhymes, stories and picture talk',
+      'Fine-motor play with clay, crayons and beads',
+      'Counting 1–10 with objects',
+      'Recognising letters by their sounds',
+      'Sitting, listening and sharing',
+    ],
+    stuck: 'Short attention spans — so the tutor works in ten-minute play blocks instead of long worksheets.',
+  },
+  nursery: {
+    topics: [
+      'Phonic sounds a–z',
+      'Pre-writing strokes: standing, sleeping and slanting lines',
+      'Numbers 1–50 and counting',
+      'Colours, fruits, animals and body parts',
+      'Hindi varnamala',
+      'Rhymes and picture talk',
+    ],
+    stuck: 'Holding the pencil correctly and forming letters in the right direction.',
+  },
+  lkg: {
+    topics: [
+      'Writing A–Z and a–z',
+      'Blending three-letter (CVC) words',
+      'Numbers 1–100: before, after, between',
+      'Addition with objects',
+      'Hindi swar and vyanjan',
+      'Shapes, opposites and "my family"',
+    ],
+    stuck: 'Moving from recognising letters to blending them into words.',
+  },
+  ukg: {
+    topics: [
+      'Reading simple sentences and sight words',
+      'Addition and subtraction up to 20',
+      'Number names and ordinal numbers',
+      'Introduction to Hindi matras',
+      'Days, months and seasons',
+      'Community helpers and good habits',
+    ],
+    stuck: 'Reading fluency and spacing between words before Class 1 begins.',
+  },
+  'class-1': {
+    topics: [
+      'Maths: numbers to 100, addition, subtraction, shapes, time',
+      'English: phonics, sight words, simple sentences',
+      'Hindi: matras and short words',
+      'EVS: my body, my family, plants and animals',
+    ],
+    stuck: 'Neat handwriting, and reading without spelling out every letter.',
+  },
+  'class-2': {
+    topics: [
+      'Maths: numbers to 1000, carrying and borrowing, tables 2–10, money',
+      'English: nouns, verbs, short comprehension',
+      'Hindi: shabd and vakya',
+      'EVS: food, water, transport',
+    ],
+    stuck: 'Word problems — understanding what the question is actually asking.',
+  },
+  'class-3': {
+    topics: [
+      'Maths: 4-digit numbers, multiplication, division, fractions, calendar',
+      'English: tenses, sentence formation, short paragraphs',
+      'Hindi: vyakaran basics',
+      'EVS: our surroundings and simple maps',
+    ],
+    stuck: 'Multiplication tables and the steps of long division.',
+  },
+  'class-4': {
+    topics: [
+      'Maths: large numbers, factors and multiples, fractions, decimals, perimeter',
+      'English: grammar, letter and story writing',
+      'Science / EVS: plants, animals, food chains',
+      'Hindi: nibandh and patra',
+    ],
+    stuck: 'Fractions, and organising longer written answers.',
+  },
+  'class-5': {
+    topics: [
+      'Maths: LCM and HCF, fractions and decimals, percentage, area and volume',
+      'English: comprehension and essay writing',
+      'Science: human body systems, soil, water',
+      'Social studies: maps and the globe',
+    ],
+    stuck: 'Getting ready for middle school — more chapters and the start of self-study habits.',
+  },
+  'class-6': {
+    topics: [
+      'Maths: knowing our numbers, integers, fractions and decimals, basic geometry, ratio and proportion',
+      'Science: food, materials, motion and measurement, light, electricity',
+      'Social science: history, geography and civics as separate books',
+      'English and Hindi grammar',
+    ],
+    stuck: 'Integers, and handling three separate social science books for the first time.',
+  },
+  'class-7': {
+    topics: [
+      'Maths: integers, rational numbers, simple equations, lines and angles, triangles, percentages',
+      'Science: nutrition, heat, acids and bases, motion and time, electric current',
+      'Social science: medieval history, environment, democracy',
+    ],
+    stuck: 'Simple equations, and the first Science numericals.',
+  },
+  'class-8': {
+    topics: [
+      'Maths: linear equations, quadrilaterals, exponents, algebraic identities, factorisation, mensuration',
+      'Science: force and pressure, friction, sound, chemical effects of current, cell structure',
+      'Social science: modern history, resources, the Constitution',
+    ],
+    stuck: 'Algebraic identities and factorisation — the foundation for Class 9 and 10.',
+  },
+  'class-9': {
+    topics: [
+      'Maths: number systems, polynomials, coordinate geometry, linear equations, triangles, circles, statistics',
+      'Science: matter, atoms and molecules, the cell, tissues, motion, laws of motion, gravitation, work and energy, sound',
+      'Social science, English and Hindi',
+    ],
+    stuck: 'Physics numericals and geometry proofs — and this syllabus leads straight into the Class 10 boards.',
+  },
+  'class-10': {
+    topics: [
+      'Maths: real numbers, polynomials, quadratic equations, arithmetic progressions, triangles, coordinate geometry, trigonometry, circles, statistics and probability',
+      'Science: chemical reactions, acids, bases and salts, metals and non-metals, carbon compounds, life processes, heredity, light, electricity, magnetic effects of current',
+      'Social science, English and Hindi with board-pattern writing practice',
+    ],
+    stuck: 'Time management and answer presentation in the board paper.',
+  },
+  'class-11': {
+    topics: [
+      'Physics: units, kinematics, laws of motion, work and energy, rotation, gravitation',
+      'Chemistry: mole concept, atomic structure, chemical bonding, thermodynamics, equilibrium, basics of organic chemistry',
+      'Maths: sets, trigonometry, sequences and series, straight lines, conic sections, limits and derivatives',
+      'Biology, Accountancy and Economics for science and commerce streams',
+    ],
+    stuck: 'The big jump from Class 10 — calculus and organic chemistry feel brand new.',
+  },
+  'class-12': {
+    topics: [
+      'Physics: electrostatics, current electricity, magnetism, electromagnetic induction, optics, modern physics',
+      'Chemistry: solutions, electrochemistry, chemical kinetics, d- and f-block elements, coordination compounds, organic reactions',
+      'Maths: relations and functions, matrices, determinants, calculus, vectors, 3D geometry, probability',
+      'Biology, Accountancy (partnership and company accounts) and Economics',
+    ],
+    stuck: 'Balancing board preparation with JEE, NEET or CUET.',
+  },
+  'jee-neet': {
+    topics: [
+      'JEE Main and Advanced: Physics, Chemistry and Maths at entrance level',
+      'NEET: Physics, Chemistry and Biology with NCERT line-by-line revision',
+      'Previous-year questions and timed mock tests',
+      'Doubt sessions and error logs after every test',
+    ],
+    stuck: 'Speed and accuracy under exam timing.',
+  },
+  diploma: {
+    topics: [
+      'Applied Mathematics',
+      'Applied Physics and Chemistry',
+      'Core engineering subjects for each semester',
+      'Assignments, practical files and viva preparation',
+    ],
+    stuck: 'Keeping up with the semester pace while the maths gets heavier.',
+  },
+  undergraduate: {
+    topics: [
+      'B.Sc: Mathematics, Physics, Chemistry, Statistics',
+      'B.Com: Accountancy, Business Economics, Taxation',
+      'B.Tech first-year Maths and Physics',
+      'University semester exams, assignments and practical files',
+    ],
+    stuck: 'A large syllabus with little one-to-one attention in big lecture halls.',
+  },
+  postgraduate: {
+    topics: [
+      'M.Sc Mathematics, Physics and Chemistry papers',
+      'M.Com and MBA finance, accounting and quantitative papers',
+      'Statistics and research methodology',
+      'Dissertation and project guidance',
+    ],
+    stuck: 'Advanced concepts that need patient, one-to-one explanation.',
+  },
+};
+
+// Short local description for each area page.
+const areaAbout = {
+  'triveni-nagar':
+    'Triveni Nagar sits off Sitapur Road in north Lucknow, between Aliganj and Madiyaon. Families here can visit our office in Triveni Nagar 3rd to meet the team before the first class.',
+  aliganj:
+    'Aliganj is one of north Lucknow’s largest planned colonies, laid out in sectors with Kapoorthala’s market close by. It is a short ride from our office, which keeps travel time low for weekday evening classes.',
+  'gomti-nagar':
+    'Gomti Nagar, on the eastern side of the Gomti, is organised into khands such as Vibhuti, Vikas and Viram Khand, and continues into Gomti Nagar Extension. Our tutors cover the whole stretch.',
+  'indira-nagar':
+    'Indira Nagar is a large residential area in east Lucknow, spread across numbered sectors from Munshi Pulia towards Faizabad Road, with Bhootnath market at its centre.',
+  jankipuram: 'Jankipuram and Jankipuram Extension lie in north Lucknow along Kursi Road, close to the Engineering College area and Vikas Nagar.',
+  'vikas-nagar': 'Vikas Nagar is a north Lucknow residential area of numbered sectors along Kursi Road, between Mahanagar and Jankipuram.',
+  mahanagar: 'Mahanagar is an established central-north locality near Nishatganj, Paper Mill Colony and Badshah Nagar, with Kapoorthala a few minutes away.',
+  hazratganj:
+    'Hazratganj is Lucknow’s central market and office district; nearby residential pockets such as Lalbagh, Narhi and Butler Colony are home to many school-going families.',
+  alambagh: 'Alambagh, in south Lucknow near Charbagh railway station, includes residential areas such as Krishna Nagar, Singar Nagar and Avadh Vihar.',
+  ashiyana: 'Ashiyana is a planned south Lucknow colony off Kanpur Road, divided into sectors and khands such as Ruchi Khand, with LDA Colony next door.',
+  rajajipuram: 'Rajajipuram is a large residential area in west Lucknow, close to Talkatora, Aishbagh and Dubagga.',
+  chowk: 'Chowk is the heart of old Lucknow, alongside Aminabad, Saadatganj, Thakurganj and Nakhas.',
+  kapoorthala: 'Kapoorthala is a busy commercial and residential hub in north Lucknow, bordered by Aliganj, Mahanagar and Nirala Nagar.',
+  'sitapur-road': 'Sitapur Road runs north out of the city through Triveni Nagar, Madiyaon and Khurram Nagar towards IIM Road.',
+  'nirala-nagar': 'Nirala Nagar is a central-north residential locality between Mahanagar, Badshah Nagar and Kapoorthala.',
+  'sushant-golf-city': 'Sushant Golf City is a newer township on Lucknow’s south-eastern edge, along Shaheed Path and Sultanpur Road near Arjunganj.',
+  chinhat: 'Chinhat lies on Faizabad Road in east Lucknow, beyond Gomti Nagar, and takes in Matiyari, Malhaur and Tiwariganj.',
+  telibagh: 'Telibagh is in south Lucknow on Raebareli Road, near SGPGI and the Vrindavan Yojna housing scheme.',
+};
+
 const faqs = [
   {
     q: 'How do I get a home tutor from Education Hub?',
@@ -629,6 +845,7 @@ const posts = [
   {
     slug: 'how-to-choose-home-tutor-lucknow',
     title: "How to Choose the Right Home Tutor in Lucknow: A Parent's Checklist",
+    seoTitle: 'How to Choose a Home Tutor in Lucknow: Checklist',
     description: 'Seven practical checks every Lucknow parent should make before hiring a home tutor — from the demo class to progress tracking.',
     date: '2026-10-20',
     body: [
@@ -691,6 +908,7 @@ const posts = [
   {
     slug: 'home-tuition-vs-coaching',
     title: 'Home Tuition vs Coaching Centre: Which Is Better for Your Child?',
+    seoTitle: 'Home Tuition vs Coaching: Which Is Better?',
     description: 'An honest comparison of home tuition and coaching classes in Lucknow — cost, attention, travel time and results.',
     date: '2026-09-28',
     body: [
@@ -776,4 +994,4 @@ const tutors = [
   },
 ];
 
-module.exports = { SITE, subjects, classes, boards, exams, areas, faqs, fees, posts, testimonials, tutors };
+module.exports = { SITE, subjects, classes, classGuide, boards, exams, areas, areaAbout, faqs, fees, posts, testimonials, tutors };

@@ -6,7 +6,7 @@ const path = require('path');
 const { homeScene, tutorScene } = require('./illustrations');
 const { subjectArt, classArt, boardArt, examArt, areaArt, postArt, gallery } = require('./art');
 const { icons } = require('./icons');
-const { SITE, subjects, classes, boards, exams, areas, faqs, fees, posts, testimonials, tutors } = require('./data');
+const { SITE, subjects, classes, classGuide, boards, exams, areas, areaAbout, faqs, fees, posts, testimonials, tutors } = require('./data');
 
 const SRC = __dirname;
 const DIST = path.join(SRC, '..', 'dist');
@@ -16,6 +16,8 @@ const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replac
 const abs = (p) => SITE.url + p;
 // Meta descriptions over ~160 chars get cut by Google; trim at a word boundary instead of mid-word.
 const clip = (str, max = 160) => (str.length <= max ? str : `${str.slice(0, str.lastIndexOf(' ', max - 1)).replace(/[,.;:—-]+$/, '')}…`);
+// Google shows about 60 characters of a title; use the first variant that fits.
+const fitTitle = (...options) => options.find((t) => t.length <= 60) || options[options.length - 1];
 const wa = (text) => `https://wa.me/${SITE.whatsapp}?text=${encodeURIComponent(text)}`;
 const tel = `tel:${SITE.phone}`;
 const addressLine = `${SITE.address.street}, ${SITE.address.locality}, ${SITE.address.region} ${SITE.address.postalCode}`;
@@ -80,7 +82,8 @@ const businessSchema = {
       itemOffered: { '@type': 'Service', name: `${s.name} home tuition`, url: abs(`/subjects/${s.slug}/`) },
     })),
   },
-  sameAs: Object.values(SITE.social).filter(Boolean),
+  // Only listed once real profiles exist; an empty list is noise for Google.
+  ...(Object.values(SITE.social).some(Boolean) && { sameAs: Object.values(SITE.social).filter(Boolean) }),
 };
 
 const itemListSchema = (name, items) => ({
@@ -297,7 +300,7 @@ function footer() {
     </div>
   </div>
   <div class="ft-bottom" style="max-width:1400px;margin:0 auto;">
-    <span>© ${new Date().getFullYear()} <span class="ft-brand-name">${esc(SITE.name)}</span> · All Rights Reserved</span>
+    <span>© ${new Date().getFullYear()} <span class="ft-brand-name">${esc(SITE.name)}</span> · <a href="/">${SITE.url.replace(/^https:\/\//, '')}</a> · All Rights Reserved</span>
     <span class="ft-dev">Created with <span aria-label="love">❤️</span> by <a href="https://www.linkedin.com/in/thakursatyam9415" target="_blank" rel="noopener">Satyam Singh</a> &amp; <a href="https://www.neosharks.in/" target="_blank" rel="noopener">Neosharks</a></span>
     <ul class="ft-legal">
       <li><a href="/privacy-policy/">Privacy Policy</a></li>
@@ -447,18 +450,28 @@ const initials = (name) =>
     .slice(0, 2)
     .toUpperCase();
 
-// Renders nothing until real tutor profiles are added to data.js.
-const tutorsBlock = () =>
-  tutors.length
-    ? `
+// A tutor serves an area when one of their listed localities is the area, one of its neighbourhoods, or a part of it
+// (e.g. "Gomti Nagar Extension" counts for Gomti Nagar).
+const servesArea = (t, a) =>
+  (t.area || '')
+    .split(',')
+    .map((x) => x.trim().toLowerCase())
+    .some((x) => x.startsWith(a.name.toLowerCase()) || a.near.some((n) => n.toLowerCase() === x));
+
+// Renders nothing until real tutor profiles are added to data.js. On an area page, local tutors come first.
+const tutorsBlock = (area) => {
+  if (!tutors.length) return '';
+  const local = area ? tutors.filter((t) => servesArea(t, area)) : [];
+  const list = [...local, ...tutors.filter((t) => !local.includes(t))];
+  return `
 <section class="tht-tutors-new" aria-labelledby="tutors-h">
   <div class="tht-container">
     <div class="tht-tutors-new__head">
       <div class="tht-tutors-new__pill">${fa('fa-person-chalkboard')} Tutors</div>
-      <h2 class="tht-tutors-new__title" id="tutors-h">Meet Our <span>Top Experts</span></h2>
-      <p class="tht-tutors-new__sub">Verified home tutors at your doorstep in Lucknow.</p>
+      <h2 class="tht-tutors-new__title" id="tutors-h">${local.length ? `Tutors near <span>${area.name}</span>` : 'Meet Our <span>Top Experts</span>'}</h2>
+      <p class="tht-tutors-new__sub">${local.length ? `${local.length === 1 ? 'This tutor teaches' : 'These tutors teach'} in and around ${area.name}, plus more across Lucknow.` : 'Verified home tutors at your doorstep in Lucknow.'}</p>
     </div>
-    <div class="tht-tutors-new__scroll-wrapper"><div class="tht-tutors-new__scroll" id="tutor-scroll"><div class="tht-tutors-new__track">${tutors
+    <div class="tht-tutors-new__scroll-wrapper"><div class="tht-tutors-new__scroll" id="tutor-scroll"><div class="tht-tutors-new__track">${list
       .map(
         (t) => `<article class="tnt-card">
   <div class="tnt-card__header">
@@ -485,17 +498,17 @@ const tutorsBlock = () =>
       )
       .join('')}</div></div></div>
     ${
-      tutors.length > 1
+      list.length > 1
         ? `    <div class="tht-tutors-nav" data-tutor-nav>
       <button class="tht-tutors-nav__arrow" type="button" data-dir="-1" aria-label="Previous tutor">${fa('fa-arrow-right')}</button>
-      <div class="tht-tutors-nav__dots">${tutors.map((t, i) => `<button class="tht-tutors-nav__dot${i ? '' : ' active'}" type="button" data-i="${i}" aria-label="Show ${esc(t.name)}"></button>`).join('')}</div>
+      <div class="tht-tutors-nav__dots">${list.map((t, i) => `<button class="tht-tutors-nav__dot${i ? '' : ' active'}" type="button" data-i="${i}" aria-label="Show ${esc(t.name)}"></button>`).join('')}</div>
       <button class="tht-tutors-nav__arrow" type="button" data-dir="1" aria-label="Next tutor">${fa('fa-arrow-right')}</button>
     </div>`
         : ''
     }
   </div>
-</section>`
-    : '';
+</section>`;
+};
 
 // Shown once per visit on desktop only — Google penalises pop-ups that cover content on mobile.
 const welcome = `
@@ -782,7 +795,7 @@ const popularLinks = [
 page({
   url: '/',
   current: '/',
-  title: 'Home Tutors in Lucknow | Free Demo Class | Education Hub Home Tutors',
+  title: `${SITE.name} | Home Tutors in Lucknow`,
   description:
     'Find verified home tutors in Lucknow for Class 1–12, CBSE, ICSE, UP Board, IB, JEE & NEET. Free demo class at your home within 24 hours. Call 63866 05007.',
   schema: [faqSchema(faqs), serviceSchema('Home Tuition in Lucknow', 'One-to-one home tuition for all classes, boards and subjects across Lucknow.', '/')],
@@ -1073,7 +1086,7 @@ ${finalCta}
 page({
   url: '/subjects/',
   current: '/subjects/',
-  title: 'Subject-wise Home Tutors in Lucknow | Maths, Science, English',
+  title: 'Subject-wise Home Tutors in Lucknow | Education Hub',
   description:
     'Hire expert home tutors in Lucknow for Maths, Physics, Chemistry, Biology, English, Hindi, Computer Science, Accounts and more. Free demo class.',
   h1: 'Explore all <span class="h1-hl">subjects</span> in Lucknow',
@@ -1115,7 +1128,7 @@ for (const [i, s] of subjects.entries()) {
   page({
     url,
     current: '/subjects/',
-    title: `${s.name} Home Tutor in Lucknow | Free Demo | Education Hub`,
+    title: fitTitle(`${s.name} Home Tutor in Lucknow | Free Demo | Education Hub`, `${s.name} Home Tutor in Lucknow | Education Hub`),
     description: clip(`Verified ${s.name} home tutors in Lucknow for all classes and boards. ${s.blurb} Book a free demo class today.`),
     h1: `<span class="h1-hl">${s.name}</span> home tutor in Lucknow`,
     hero: {
@@ -1162,7 +1175,7 @@ ${finalCta}`,
 page({
   url: '/classes/',
   current: '/classes/',
-  title: 'Class-wise Home Tutors in Lucknow | Nursery to Class 12, JEE, NEET',
+  title: 'Class-wise Home Tutors in Lucknow | Nursery to Class 12',
   description: 'Home tutors in Lucknow for Play Group, Nursery, LKG, UKG, Class 1 to 12, JEE, NEET, diploma and college subjects. Book a free demo class.',
   h1: 'Home tutors for <span class="h1-hl">every class</span> in Lucknow',
   hero: {
@@ -1210,12 +1223,13 @@ for (const [i, c] of classes.entries()) {
       a: `It depends on the number of subjects, days per week and the tutor's experience. A typical range is ${feeFor(c).range} ${feeFor(c).note}. We confirm the exact fee before the free demo.`,
     },
     { q: `Do you have ${c.name} tutors for all boards?`, a: 'Yes — CBSE, ICSE, UP Board, IB, IGCSE and NIOS.' },
+    { q: `What does a ${c.name} home tutor cover?`, a: `${classGuide[c.slug].topics.join('; ')}.` },
     { q: 'How soon can the tutor start?', a: 'In most areas of Lucknow we arrange a free demo within 24 hours of your enquiry.' },
   ];
   page({
     url,
     current: '/classes/',
-    title: `${c.name} Home Tutor in Lucknow | Free Demo | Education Hub`,
+    title: fitTitle(`${c.name} Home Tutor in Lucknow | Free Demo | Education Hub`, `${c.name} Home Tutor in Lucknow | Education Hub`),
     description: clip(`Experienced ${c.name} home tutors in Lucknow. ${c.focus} Free demo class at home.`),
     h1: `<span class="h1-hl">${c.name}</span> home tutor in Lucknow`,
     hero: {
@@ -1235,6 +1249,10 @@ for (const [i, c] of classes.entries()) {
   <article class="prose">
     <h2>What ${c.name} students need</h2>
     <p>${esc(c.focus)}</p>
+    <h2>What we cover in ${c.name}</h2>
+    <ul class="ticks">${classGuide[c.slug].topics.map((t) => `<li>${esc(t)}</li>`).join('')}</ul>
+    <h2>Where ${c.name} students usually get stuck</h2>
+    <p>${esc(classGuide[c.slug].stuck)} A home tutor spots this early, explains it the way your child understands, and practises it until it sticks — something a crowded classroom rarely has time for.</p>
     <p>Our ${c.name} tutors build a simple weekly plan around your child's school timetable — covering homework, upcoming tests and the topics they find hardest. Parents get regular updates so nothing comes as a surprise at PTM time.</p>
     <h2>Subjects for ${c.name}</h2>
     ${subjectCards(relevant)}
@@ -1260,7 +1278,7 @@ for (const [i, b] of boards.entries()) {
   page({
     url,
     current: '/classes/',
-    title: `${b.name} Home Tutors in Lucknow | ${b.full} | Education Hub`.slice(0, 70),
+    title: fitTitle(`${b.name} Home Tutors in Lucknow | Free Demo | Education Hub`, `${b.name} Home Tutors in Lucknow | Education Hub`),
     description: `Experienced ${b.name} home tutors in Lucknow for all classes and subjects. Board-focused teaching, regular tests and a free demo class.`,
     h1: `<span class="h1-hl">${b.name}</span> home tutors in Lucknow`,
     hero: {
@@ -1314,7 +1332,7 @@ for (const [i, e] of exams.entries()) {
   page({
     url,
     current: '/classes/',
-    title: `${e.short} Home Tutor in Lucknow | One-to-One Coaching | Education Hub`,
+    title: fitTitle(`${e.short} Home Tutor in Lucknow | One-to-One | Education Hub`, `${e.short} Home Tutor in Lucknow | Education Hub`),
     description: `One-to-one ${e.name} home coaching in Lucknow for ${e.subjects}. Personal study plans, mock tests and daily doubt-solving. Free demo.`.slice(
       0,
       158,
@@ -1355,7 +1373,7 @@ ${finalCta}`,
 page({
   url: '/areas/',
   current: '/areas/',
-  title: 'Home Tutors Near Me in Lucknow | All Areas Covered | Education Hub',
+  title: 'Home Tutors Near Me in Lucknow | All Areas | Education Hub',
   description: 'Find a home tutor near you in Lucknow — Triveni Nagar, Aliganj, Gomti Nagar, Indira Nagar, Jankipuram, Mahanagar, Alambagh and more.',
   h1: 'Find tutors in your <span class="h1-hl">exact locality</span>',
   hero: {
@@ -1385,11 +1403,25 @@ for (const [i, a] of areas.entries()) {
       q: `What is the home tuition fee in ${a.name}, Lucknow?`,
       a: 'Fees depend on class and subjects, typically ₹2,000–₹10,000 per month for school classes. We share the exact fee before the demo.',
     },
+    { q: `Which localities around ${a.name} do you cover?`, a: `${a.name} and nearby ${a.near.join(', ')} — plus the rest of Lucknow.` },
+    ...(tutors.some((t) => servesArea(t, a))
+      ? [
+          {
+            q: `Do you have tutors who live near ${a.name}?`,
+            a: `Yes — ${tutors
+              .filter((t) => servesArea(t, a))
+              .map((t) => `${t.name}${t.subjects ? ` (${t.subjects})` : t.specialty ? ` (${t.specialty})` : ''}`)
+              .join(
+                ', ',
+              )} ${tutors.filter((t) => servesArea(t, a)).length === 1 ? 'teaches' : 'teach'} in this area, and we match others from nearby localities.`,
+          },
+        ]
+      : []),
   ];
   page({
     url,
     current: '/areas/',
-    title: `Home Tutor in ${a.name}, Lucknow | Free Demo | Education Hub`,
+    title: fitTitle(`Home Tutor in ${a.name}, Lucknow | Free Demo | Education Hub`, `Home Tutor in ${a.name}, Lucknow | Education Hub`),
     description: `Verified home tutors in ${a.name}, Lucknow for Class 1–12, CBSE, ICSE, UP Board, JEE & NEET. Female & male tutors. Free demo within 24 hours.`,
     h1: `Home tutor in <span class="h1-hl">${a.name}</span>, Lucknow`,
     hero: {
@@ -1409,6 +1441,7 @@ for (const [i, a] of areas.entries()) {
   <article class="prose">
     <p class="tag">${esc(a.zone)}</p>
     <h2>Trusted home tuition in ${a.name}</h2>
+    <p>${esc(areaAbout[a.slug])}</p>
     <p>${esc(a.note)}</p>
     <p>We send tutors to homes across ${a.name} and nearby — ${a.near.map(esc).join(', ')}. Whether your child needs help with primary-class homework, board exam preparation or JEE/NEET, we'll match a tutor who lives close by, so classes are regular and on time.</p>
     <h2>Popular tuition in ${a.name}</h2>
@@ -1424,12 +1457,47 @@ for (const [i, a] of areas.entries()) {
   ${sideCard(areaArt(a, i), `home`)}
 </div></section>
 ${steps}
-${tutorsBlock()}
+${tutorsBlock(a)}
 ${testimonialsBlock()}
 ${faqBlock(aFaqs, `Home tuition in ${a.name} — FAQs`)}
 ${finalCta}`,
   });
 }
+
+// FAQs for the tutor-facing and contact pages: only facts already stated elsewhere on the site.
+const tutorFaqs = [
+  { q: 'Is there a fee to register as a tutor?', a: 'No. Registering with Education Hub Home Tutors is free.' },
+  {
+    q: 'Who can become a home tutor with you?',
+    a: 'Graduates, postgraduates, B.Ed / D.El.Ed holders, working teachers and subject experts living in Lucknow. College students with strong subject knowledge can apply for primary and middle classes.',
+  },
+  { q: 'Which documents do I need?', a: 'Government ID, address proof and your qualification certificates, followed by a short interview and subject check.' },
+  {
+    q: 'How will I get tuition jobs?',
+    a: 'Once you are registered, we share tuition requirements near your home on WhatsApp, and you choose the ones that fit your subjects and timings.',
+  },
+];
+const jobFaqs = [
+  {
+    q: 'How do I apply for a home tuition job in Lucknow?',
+    a: 'Tap "Apply Now on WhatsApp" on any job, or register with the form on this page so we can send you matching jobs.',
+  },
+  { q: 'Can I choose my own timings and areas?', a: 'Yes. You pick the classes, subjects, timings and localities that suit you.' },
+  {
+    q: 'Which areas are the jobs in?',
+    a: `All over Lucknow — including ${areas
+      .slice(0, 8)
+      .map((a) => a.name)
+      .join(', ')} and more.`,
+  },
+  { q: 'Is registration free?', a: 'Yes, registering as a tutor is free.' },
+];
+const contactFaqs = [
+  { q: 'What are your working hours?', a: `We are open ${SITE.hoursDisplay}.` },
+  { q: 'Where is your office?', a: `${addressLine}. You are welcome to visit and meet the team — call ahead on ${SITE.phoneDisplay}.` },
+  { q: 'How quickly will you reply?', a: 'We call back within 30 minutes during working hours, and usually arrange a free demo class within 24 hours.' },
+  { q: 'Can I contact you on WhatsApp?', a: `Yes — message us on WhatsApp at ${SITE.phoneDisplay} any time.` },
+];
 
 // ---------- Core pages ----------
 
@@ -1476,7 +1544,7 @@ ${steps}${finalCta}`,
 page({
   url: '/get-tutor/',
   current: '/get-tutor/',
-  title: 'Book a Free Demo Class | Get a Home Tutor in Lucknow | Education Hub',
+  title: 'Book a Free Demo Class | Home Tutor in Lucknow',
   description:
     'Request a verified home tutor in Lucknow in under a minute. Free demo class, no advance payment, male & female tutors for all classes and boards.',
   h1: 'Find your perfect <span class="h1-hl">home tutor</span> in Lucknow',
@@ -1505,7 +1573,7 @@ ${faqBlock(faqs)}`,
 page({
   url: '/become-a-tutor/',
   current: '/become-a-tutor/',
-  title: 'Become a Home Tutor in Lucknow | Tuition Jobs | Education Hub',
+  title: 'Become a Home Tutor in Lucknow | Education Hub',
   description:
     'Join Education Hub as a home tutor in Lucknow. Get tuition leads near your home, flexible timings and timely payments. Register free on WhatsApp.',
   h1: 'Become a <span class="h1-hl">home tutor</span> in Lucknow',
@@ -1516,6 +1584,7 @@ page({
     side: tutorForm,
     forTutors: true,
   },
+  schema: [faqSchema(tutorFaqs)],
   crumbs: [
     ['Home', '/'],
     ['Become a Tutor', '/become-a-tutor/'],
@@ -1542,13 +1611,14 @@ page({
     <p>Already registered? See <a href="/tuition-jobs/">current tuition jobs</a>.</p>
   </article>
   ${sideCard(tutorScene, 'tutoring job', 'Hi Education Hub 👋 I want to register as a home tutor.')}
-</div></section>`,
+</div></section>
+${faqBlock(tutorFaqs, 'Becoming a tutor — FAQs')}`,
 });
 
 page({
   url: '/tuition-jobs/',
   current: '/tuition-jobs/',
-  title: 'Home Tuition Jobs in Lucknow | Latest Tutor Vacancies | Education Hub',
+  title: 'Home Tuition Jobs in Lucknow | Latest Vacancies',
   description: 'Latest home tuition jobs in Lucknow for all classes and subjects. Apply on WhatsApp and start teaching near your home.',
   h1: 'Home <span class="h1-hl">tuition jobs</span> in Lucknow',
   hero: {
@@ -1558,6 +1628,7 @@ page({
     side: tutorForm,
     forTutors: true,
   },
+  schema: [faqSchema(jobFaqs)],
   crumbs: [
     ['Home', '/'],
     ['Tuition Jobs', '/tuition-jobs/'],
@@ -1570,13 +1641,14 @@ page({
     <p>Fresh requirements come in daily. Register as a tutor and we'll send matching jobs in your area straight to WhatsApp.</p>
     <p><a class="btn btn--primary" href="/become-a-tutor/">Register as Tutor</a> <a class="btn btn--outline" href="${wa('Hi Education Hub, I am a tutor looking for tuition jobs in Lucknow. Please share jobs in my area.')}" target="_blank" rel="noopener">Get Jobs on WhatsApp</a></p>
   </div>
-</div></section>`,
+</div></section>
+${faqBlock(jobFaqs, 'Tuition jobs — FAQs')}`,
 });
 
 page({
   url: '/fees/',
   current: '/fees/',
-  title: 'Home Tuition Fees in Lucknow 2026 | Class-wise Charges | Education Hub',
+  title: `Home Tuition Fees in Lucknow ${BUILD_DATE.slice(0, 4)} | Education Hub`,
   description:
     'Transparent home tuition fees in Lucknow for Play Group to Class 12, JEE, NEET and Spoken English. Typical monthly ranges and what affects the price.',
   h1: 'Transparent <span class="h1-hl">home tuition fees</span> in Lucknow',
@@ -1623,7 +1695,7 @@ page({
     ['Home', '/'],
     ['Contact', '/contact/'],
   ],
-  schema: [{ '@context': 'https://schema.org', '@type': 'ContactPage', url: abs('/contact/'), about: { '@id': orgId } }],
+  schema: [faqSchema(contactFaqs), { '@context': 'https://schema.org', '@type': 'ContactPage', url: abs('/contact/'), about: { '@id': orgId } }],
   body: `
 <section class="sec"><div class="wrap split">
   <div class="prose">
@@ -1638,7 +1710,8 @@ page({
     <div class="map"><iframe title="Map to ${esc(SITE.name)}" src="https://maps.google.com/maps?q=${encodeURIComponent('Triveni Nagar 3rd, Lucknow 226020')}&output=embed" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe></div>
   </div>
   ${sideCard(homeScene, 'home')}
-</div></section>`,
+</div></section>
+${faqBlock(contactFaqs, 'Contact — FAQs')}`,
 });
 
 // ---------- Blog ----------
@@ -1647,7 +1720,7 @@ page({
   url: '/blog/',
   current: '/blog/',
   title: 'Study Tips & Parenting Guides | Education Hub Blog',
-  description: 'Practical study tips, board exam plans and guides for Lucknow parents choosing a home tutor.',
+  description: 'Practical study tips, board exam plans and guides for Lucknow parents choosing a home tutor — written by the Education Hub Home Tutors team.',
   h1: 'Home tuition <span class="h1-hl">guides</span> for Lucknow families',
   hero: {
     badge: 'Blog · Study tips &amp; guides',
@@ -1681,7 +1754,7 @@ for (const [i, p] of posts.entries()) {
     current: '/blog/',
     ogType: 'article',
     lastmod: p.date,
-    title: p.title,
+    title: fitTitle(`${p.seoTitle || p.title} | Education Hub`, p.seoTitle || p.title),
     description: p.description,
     image: cover,
     crumbs: [
@@ -1808,12 +1881,13 @@ fs.writeFileSync(
 );
 fs.copyFileSync(path.join(SRC, 'jobs.json'), path.join(DIST, 'jobs.json'));
 
+// lastmod only where we know when the content changed (blog posts); a build date on every page teaches Google to ignore it.
 const sitemapUrls = pages.filter((p) => !p.noindex);
 fs.writeFileSync(
   path.join(DIST, 'sitemap.xml'),
   `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-${sitemapUrls.map((p) => `  <url><loc>${abs(p.url)}</loc><lastmod>${p.lastmod || BUILD_DATE}</lastmod><priority>${p.url === '/' ? '1.0' : p.url.split('/').length > 3 ? '0.7' : '0.8'}</priority></url>`).join('\n')}
+${sitemapUrls.map((p) => `  <url><loc>${abs(p.url)}</loc>${p.lastmod ? `<lastmod>${p.lastmod}</lastmod>` : ''}<priority>${p.url === '/' ? '1.0' : p.url.split('/').length > 3 ? '0.7' : '0.8'}</priority></url>`).join('\n')}
 </urlset>
 `,
 );

@@ -32,11 +32,11 @@ test('every page has exactly one h1, a canonical and a description', () => {
   }
 });
 
-test('titles are unique and at most 70 characters', () => {
+test('titles are unique and at most 60 characters', () => {
   const seen = new Map();
   for (const { file, html } of pages) {
     const title = html.match(/<title>(.*?)<\/title>/)[1];
-    assert.ok(title.length <= 70, `${title.length} chars: ${file}`);
+    assert.ok(title.replace(/&amp;/g, '&').length <= 60, `${title.length} chars: ${file}`);
     assert.ok(!seen.has(title), `duplicate title "${title}" in ${file} and ${seen.get(title)}`);
     seen.set(title, file);
   }
