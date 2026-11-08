@@ -5914,8 +5914,11 @@ picture.photo img {
     font-size: 12px;
   }
 }
-.tht-tutors-nav[hidden] {
-  display: none;
+/* The row only scrolls at phone/tablet widths; show its controls there and nowhere else */
+@media (min-width: 901px) {
+  .tht-tutors-nav {
+    display: none;
+  }
 }
 .tht-tutors-nav__arrow {
   display: inline-flex;
@@ -5944,4 +5947,9 @@ picture.photo img {
   .tht-tutors-nav__dot.active {
     width: 28px;
   }
+}
+/* Below-the-fold on every page; skipping its first render also keeps the tutor row's scroll-snap work off the critical path */
+.tht-tutors-new {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 900px;
 }

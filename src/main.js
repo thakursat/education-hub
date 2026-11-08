@@ -324,7 +324,7 @@
     });
   });
 
-  // Phones show tutor cards as a swipe row; arrows and dots move it and track which card is in view.
+  // Phones show tutor cards as a swipe row (CSS shows the dots at that width); dots jump to a card and follow swipes.
   var tutorScroll = document.getElementById('tutor-scroll');
   var tutorNav = document.querySelector('[data-tutor-nav]');
   if (tutorScroll && tutorNav) {
@@ -360,11 +360,6 @@
       arrows[0].disabled = i === 0;
       arrows[1].disabled = i === cards.length - 1;
     };
-    var update = function () {
-      // Only show the controls when the row actually scrolls (phones); on desktop the cards sit in a grid.
-      tutorNav.hidden = tutorScroll.scrollWidth <= tutorScroll.clientWidth + 2;
-      sync();
-    };
     arrows.forEach(function (b) {
       b.addEventListener('click', function () {
         go(current() + Number(b.getAttribute('data-dir')));
@@ -376,8 +371,7 @@
       });
     });
     tutorScroll.addEventListener('scroll', sync, { passive: true });
-    window.addEventListener('resize', update);
-    update();
+    sync();
   }
 
   // "Refresh" shows a different dozen of the popular-search links; all of them are in the HTML for crawlers.

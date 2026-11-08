@@ -484,11 +484,15 @@ const tutorsBlock = () =>
 </article>`,
       )
       .join('')}</div></div></div>
-    <div class="tht-tutors-nav" data-tutor-nav hidden>
+    ${
+      tutors.length > 1
+        ? `    <div class="tht-tutors-nav" data-tutor-nav>
       <button class="tht-tutors-nav__arrow" type="button" data-dir="-1" aria-label="Previous tutor">${fa('fa-arrow-right')}</button>
       <div class="tht-tutors-nav__dots">${tutors.map((t, i) => `<button class="tht-tutors-nav__dot${i ? '' : ' active'}" type="button" data-i="${i}" aria-label="Show ${esc(t.name)}"></button>`).join('')}</div>
       <button class="tht-tutors-nav__arrow" type="button" data-dir="1" aria-label="Next tutor">${fa('fa-arrow-right')}</button>
-    </div>
+    </div>`
+        : ''
+    }
   </div>
 </section>`
     : '';
