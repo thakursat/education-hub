@@ -130,3 +130,28 @@ test('photo slots fall back to illustrations until a photo file is added', () =>
     assert.strictEqual(home.includes(`/assets/photos/${f}`), exists, f);
   }
 });
+
+test('every internal link and asset points to a file that exists', () => {
+  const missing = new Set();
+  for (const { file, html } of pages) {
+    for (const [, url] of html.matchAll(/(?:href|src)="(\/[^"#?]*)/g)) {
+      const target = path.join(DIST, decodeURIComponent(url));
+      const ok = url.endsWith('/') ? fs.existsSync(path.join(target, 'index.html')) : fs.existsSync(target);
+      if (!ok) missing.add(`${url} (in ${path.relative(DIST, file)})`);
+    }
+    for (const [, set] of html.matchAll(/srcset="([^"]+)"/g)) {
+      for (const part of set.split(',')) {
+        const url = part.trim().split(' ')[0];
+        if (url.startsWith('/') && !fs.existsSync(path.join(DIST, url))) missing.add(`${url} (in ${path.relative(DIST, file)})`);
+      }
+    }
+  }
+  assert.deepStrictEqual([...missing], []);
+});
+
+test('the tutor registration form appears where tutors sign up', () => {
+  for (const p of ['become-a-tutor', 'tuition-jobs']) {
+    const html = fs.readFileSync(path.join(DIST, p, 'index.html'), 'utf8');
+    assert.match(html, /<section class="ip-hero[\s\S]*?<form class="tht-form" data-tutor/, p);
+  }
+});

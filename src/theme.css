@@ -2125,7 +2125,7 @@ button {
   }
 
   .tht-subject-card__desc {
-    font-size: 11px !important;
+    font-size: 13px !important;
     color: var(--gray-500);
     line-height: 1.4;
     margin-top: 4px;
@@ -4827,10 +4827,13 @@ header.site-hdr {
     align-items: stretch;
     gap: 0;
   }
-  .main-navbar .dropdown:hover > .dropdown-menu {
+  /* Touch leaves :hover stuck after a tap, so on phones only the .open class (set by main.js) shows a dropdown.
+     The .open rule must match the hover rule's specificity and come after it. */
+  .main-navbar .dropdown:hover > .dropdown-menu,
+  .main-navbar .dropdown:focus-within > .dropdown-menu {
     display: none;
   }
-  .main-navbar .dropdown-menu.open {
+  .main-navbar .dropdown > .dropdown-menu.open {
     display: block;
   }
   .main-navbar .dropdown {
@@ -5867,4 +5870,47 @@ picture.photo img {
   height: 100%;
   object-fit: cover;
   display: block;
+}
+.ip-hero--solo .ip-hero__copy {
+  max-width: 760px;
+}
+@media (min-width: 1024px) {
+  .ip-hero--solo .ip-hero__grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* Phones: nothing readable below 12px (Google's legibility check); card descriptions and footer links a bit larger. */
+@media (max-width: 640px) {
+  .ft-col a,
+  .ft-col a.ft-hl,
+  .ft-col p {
+    font-size: 13px;
+  }
+  .ft-col h3.ft-sub-head {
+    font-size: 12px;
+  }
+  .class-sub,
+  .tht-loc-card__sub,
+  .tfs-param-badge,
+  .trust-sub,
+  .tht-board-badge,
+  .ft-col h3,
+  .ft-bottom,
+  .ft-bottom span,
+  .ft-legal a,
+  .mega-label,
+  .ft-brand-tagline,
+  .ft-hl,
+  .tht-cta__stat-lbl,
+  .ip-badge,
+  .ip-proof__item,
+  .ip-proof__item b,
+  .tht-pill,
+  .ns-stat-lbl,
+  .tht-stat__label,
+  .tht-about__stat-label,
+  .jobs-cta-label {
+    font-size: 12px;
+  }
 }

@@ -211,19 +211,33 @@
   });
 
   // Dropdown toggles: needed for touch and keyboard; desktop hover is handled in CSS.
+  var mobileNav = window.matchMedia('(max-width: 991px)');
+  function toggleSub(btn) {
+    var sub = document.getElementById(btn.getAttribute('aria-controls'));
+    var open = !sub.classList.contains('open');
+    document.querySelectorAll('.dropdown-menu.open').forEach(function (o) {
+      if (o !== sub) {
+        o.classList.remove('open');
+        document.querySelector('[aria-controls="' + o.id + '"]').setAttribute('aria-expanded', 'false');
+      }
+    });
+    sub.classList.toggle('open', open);
+    btn.setAttribute('aria-expanded', String(open));
+  }
   document.querySelectorAll('.sub-toggle').forEach(function (btn) {
     btn.addEventListener('click', function () {
-      var sub = document.getElementById(btn.getAttribute('aria-controls'));
-      var open = !sub.classList.contains('open');
-      document.querySelectorAll('.dropdown-menu.open').forEach(function (o) {
-        if (o !== sub) {
-          o.classList.remove('open');
-          document.querySelector('[aria-controls="' + o.id + '"]').setAttribute('aria-expanded', 'false');
-        }
-      });
-      sub.classList.toggle('open', open);
-      btn.setAttribute('aria-expanded', String(open));
+      toggleSub(btn);
     });
+    // In the phone menu the label (Subjects, Classes, Areas) expands its list too; each list ends with an "Explore all" link.
+    var label = btn.previousElementSibling;
+    if (label) {
+      label.addEventListener('click', function (e) {
+        if (!mobileNav.matches) return;
+        e.preventDefault();
+        e.stopPropagation();
+        toggleSub(btn);
+      });
+    }
   });
 
   var reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;

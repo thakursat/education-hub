@@ -403,17 +403,17 @@ address {
 
 /* ---------- Vibrant layer: accent palette cycled across cards, chips and icons ---------- */
 :root {
-  --c1: #ff7a1a;
+  --c1: #c2410c;
   --c1-bg: #fff1e6;
-  --c2: #16a34a;
+  --c2: #15803d;
   --c2-bg: #e8f8ee;
   --c3: #7c3aed;
   --c3-bg: #f2ebff;
-  --c4: #e11d74;
+  --c4: #be185d;
   --c4-bg: #fde8f1;
-  --c5: #0891b2;
+  --c5: #0e7490;
   --c5-bg: #e3f6fb;
-  --c6: #d97706;
+  --c6: #b45309;
   --c6-bg: #fdf3dc;
   --accent: var(--c1);
 }

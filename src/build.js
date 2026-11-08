@@ -611,11 +611,29 @@ const photo = (file, alt, fallback, eager = false, sizes = '(max-width: 640px) 9
   return `<picture class="photo"><source type="image/webp" srcset="${webp.map((w) => `/assets/photos/${base}-${w}.webp ${w}w`).join(', ')}" sizes="${sizes}">${img}</picture>`;
 };
 
-// Dark inner-page hero: copy and contact buttons on the left, the booking form on the right.
-// `accent` tints the glow and highlights, like the reference site's per-page theme colour.
-function heroBlock(h1, description, { badge, accent, checks, form, sub }) {
+// Dark inner-page hero: copy and contact buttons on the left; on the right the booking form for `form`,
+// any other markup passed as `side`, or nothing. `accent` tints the glow, like the reference site's per-page colour.
+// Pass forTutors on pages aimed at tutors: the button and fact strip then talk about registering instead of hiring.
+function heroBlock(h1, description, { badge, accent, checks, form, side, sub, forTutors = false }) {
+  const right = side || (form ? leadForm(form) : '');
+  const facts = forTutors
+    ? [
+        ['💸 Joining fee', 'None'],
+        ['📍 Tuition jobs', 'Near your home'],
+        ['📲 New jobs', 'On WhatsApp'],
+      ]
+    : [
+        ['⚡ Matched within', '24 hours'],
+        ['🎁 First class', 'Free demo'],
+        ['🛡️ Every tutor', 'ID-verified'],
+      ];
+  const waText = forTutors
+    ? 'Hi Education Hub 👋 I want to register as a home tutor.'
+    : form
+      ? `Hi Education Hub 👋 I need a tutor (${form}).`
+      : 'Hi Education Hub 👋 I need a home tutor in Lucknow.';
   return `
-<section class="ip-hero" style="--t:${accent}">
+<section class="ip-hero${right ? '' : ' ip-hero--solo'}" style="--t:${accent}">
   <div class="tht-container ip-hero__grid">
     <div class="ip-hero__copy">
       <div class="ip-badge">${fa('fa-graduation-cap')} ${badge}</div>
@@ -623,24 +641,18 @@ function heroBlock(h1, description, { badge, accent, checks, form, sub }) {
       <p class="ip-sub">${esc(sub || description)}</p>
       <div class="ip-checks">${checks.map((c) => `<span class="ip-check">${fa('fa-circle-check')} ${c}</span>`).join('')}</div>
       <div class="ip-btns">
-        <a href="${wa(`Hi Education Hub 👋 I need a tutor (${form}).`)}" class="ip-btn-wa" target="_blank" rel="noopener">${fa('fa-whatsapp')} Request a Tutor on WhatsApp</a>
+        <a href="${wa(waText)}" class="ip-btn-wa" target="_blank" rel="noopener">${fa('fa-whatsapp')} ${forTutors ? 'Register on WhatsApp' : 'Request a Tutor on WhatsApp'}</a>
         <a href="${tel}" class="ip-btn-call">${fa('fa-phone')} Call Now</a>
       </div>
-      <div class="ip-proof">
-        <div class="ip-proof__item"><b>⚡ Matched within</b><span>24 hours</span></div>
-        <div class="ip-proof__div"></div>
-        <div class="ip-proof__item"><b>🎁 First class</b><span>Free demo</span></div>
-        <div class="ip-proof__div"></div>
-        <div class="ip-proof__item"><b>🛡️ Every tutor</b><span>ID-verified</span></div>
-      </div>
+      <div class="ip-proof">${facts.map(([b, t]) => `<div class="ip-proof__item"><b>${b}</b><span>${t}</span></div>`).join('<div class="ip-proof__div"></div>')}</div>
     </div>
-    <div class="ip-hero__form">${leadForm(form)}</div>
+    ${right ? `<div class="ip-hero__form">${right}</div>` : ''}
   </div>
 </section>`;
 }
 
 // Side column on detail pages, now that the form lives in the hero.
-const sideCard = (art, name) => `
+const sideCard = (art, name, message = `Hi Education Hub 👋 I need a ${name} tutor.`) => `
 <aside class="sticky ip-side">
   <div class="ip-side__art">${art}</div>
   <ul class="ip-side__list">
@@ -649,9 +661,26 @@ const sideCard = (art, name) => `
     <li>${fa('fa-rotate')} Free tutor replacement</li>
     <li>${fa('fa-indian-rupee-sign')} Clear monthly fees</li>
   </ul>
-  <a class="ip-btn-wa" href="${wa(`Hi Education Hub 👋 I need a ${name} tutor.`)}" target="_blank" rel="noopener">${fa('fa-whatsapp')} WhatsApp Us</a>
+  <a class="ip-btn-wa" href="${wa(message)}" target="_blank" rel="noopener">${fa('fa-whatsapp')} WhatsApp Us</a>
   <a class="ip-side__call" href="${tel}">${fa('fa-phone')} ${SITE.phoneDisplay}</a>
 </aside>`;
+
+const tutorForm = formCard(
+  'Tutor Registration',
+  'Get tuition jobs near your home',
+  `<form class="tht-form" data-tutor novalidate>
+    ${field('Full Name', '<input class="tht-input" name="name" required minlength="2" autocomplete="name" placeholder="Enter your full name">')}
+    ${field('Mobile Number', '<input class="tht-input" name="phone" type="tel" inputmode="numeric" required pattern="[6-9][0-9]{9}" maxlength="10" placeholder="10-digit mobile number">')}
+    ${field('Qualification', '<input class="tht-input" name="qualification" required placeholder="e.g. M.Sc Physics, B.Ed">')}
+    ${field('Subjects You Teach', '<input class="tht-input" name="subjects" required placeholder="e.g. Maths, Physics">')}
+    ${field('Classes You Teach', '<input class="tht-input" name="classes" placeholder="e.g. Class 6–12">')}
+    ${field('Your Area', `<select class="tht-select" name="area" required><option value="">Choose your locality</option>${areaOptions()}</select>`)}
+    ${field('Experience', '<select class="tht-select" name="experience"><option>Fresher</option><option>1–3 years</option><option>3–5 years</option><option>5+ years</option></select>')}
+    <p class="lead__err" role="alert" hidden></p>
+    <button class="tht-submit" type="submit">${fa('fa-whatsapp')} Register on WhatsApp</button>
+  </form>`,
+  'Free registration for tutors across Lucknow',
+);
 
 // ---------- Page shell ----------
 
@@ -1032,7 +1061,12 @@ page({
   title: 'Subject-wise Home Tutors in Lucknow | Maths, Science, English',
   description:
     'Hire expert home tutors in Lucknow for Maths, Physics, Chemistry, Biology, English, Hindi, Computer Science, Accounts and more. Free demo class.',
-  h1: 'Subject-wise home tutors in Lucknow',
+  h1: 'Explore all <span class="h1-hl">subjects</span> in Lucknow',
+  hero: {
+    badge: `${subjects.length}+ subjects · Home tuition`,
+    accent: '#1546a0',
+    checks: ['Maths &amp; Science', 'Languages', 'Commerce', 'Spoken English'],
+  },
   schema: [
     itemListSchema(
       'Subjects',
@@ -1043,7 +1077,7 @@ page({
     ['Home', '/'],
     ['Subjects', '/subjects/'],
   ],
-  body: `<section class="sec"><div class="wrap"><p class="eyebrow">All subjects</p><h2 class="h2">Choose a subject to find your tutor</h2>${subjectCards()}</div></section>${steps}${finalCta}`,
+  body: `<section class="tht-subjects-sec" aria-labelledby="all-sub-h"><div class="tht-container">${secHead('all-sub-h', 'All Subjects', 'Choose a subject to', 'find your tutor')}${subjectCards()}</div></section>${steps}${tutorsBlock()}${testimonialsBlock()}${finalCta}`,
 });
 
 for (const [i, s] of subjects.entries()) {
@@ -1099,7 +1133,7 @@ for (const [i, s] of subjects.entries()) {
   </article>
   ${sideCard(subjectArt(s, i), s.name)}
 </div></section>
-<section class="sec sec--alt"><div class="wrap"><h2 class="h2">Other subjects</h2>${subjectCards(subjects.filter((x) => x.slug !== s.slug).slice(0, 4))}</div></section>
+<section class="tht-subjects-sec" aria-labelledby="more-sub-h"><div class="tht-container">${secHead('more-sub-h', 'Subjects', 'Other subjects', 'we teach')}${subjectCards(subjects.filter((x) => x.slug !== s.slug).slice(0, 6))}</div></section>
 ${steps}
 ${tutorsBlock()}
 ${testimonialsBlock()}
@@ -1115,7 +1149,12 @@ page({
   current: '/classes/',
   title: 'Class-wise Home Tutors in Lucknow | Nursery to Class 12, JEE, NEET',
   description: 'Home tutors in Lucknow for Play Group, Nursery, LKG, UKG, Class 1 to 12, JEE, NEET, diploma and college subjects. Book a free demo class.',
-  h1: 'Class-wise home tutors in Lucknow',
+  h1: 'Home tutors for <span class="h1-hl">every class</span> in Lucknow',
+  hero: {
+    badge: 'Play group to postgraduate',
+    accent: '#c62828',
+    checks: ['Pre-primary', 'Class 1–12', 'Board years', 'JEE / NEET &amp; college'],
+  },
   schema: [
     itemListSchema(
       'Classes',
@@ -1126,7 +1165,7 @@ page({
     ['Home', '/'],
     ['Classes', '/classes/'],
   ],
-  body: `<section class="sec"><div class="wrap"><p class="eyebrow">All classes</p><h2 class="h2">Pick your child's class</h2>${classGrid()}</div></section>${steps}${finalCta}`,
+  body: `<section class="tht-classes" aria-labelledby="all-cls-h"><div class="tht-container">${secHead('all-cls-h', 'Classes We Teach', "Pick your child's", 'class')}${classGrid()}</div></section>${steps}${tutorsBlock()}${testimonialsBlock()}${finalCta}`,
 });
 
 const feeFor = (c) => {
@@ -1237,7 +1276,7 @@ for (const [i, b] of boards.entries()) {
   </article>
   ${sideCard(boardArt(b, i), b.name)}
 </div></section>
-<section class="sec sec--alt"><div class="wrap"><h2 class="h2">Other boards</h2>${boardCards()}</div></section>
+<section class="tht-boards-section" aria-labelledby="more-brd-h"><div class="tht-container">${secHead('more-brd-h', 'Curriculum', 'All major', 'boards covered')}${boardCards()}</div></section>
 ${steps}
 ${tutorsBlock()}
 ${testimonialsBlock()}
@@ -1303,7 +1342,12 @@ page({
   current: '/areas/',
   title: 'Home Tutors Near Me in Lucknow | All Areas Covered | Education Hub',
   description: 'Find a home tutor near you in Lucknow — Triveni Nagar, Aliganj, Gomti Nagar, Indira Nagar, Jankipuram, Mahanagar, Alambagh and more.',
-  h1: 'Home tutors near you in Lucknow',
+  h1: 'Find tutors in your <span class="h1-hl">exact locality</span>',
+  hero: {
+    badge: `${areas.length}+ areas · Lucknow`,
+    accent: '#0f766e',
+    checks: ['North &amp; South Lucknow', 'East &amp; West Lucknow', 'Male &amp; female tutors', 'Free demo at home'],
+  },
   schema: [
     itemListSchema(
       'Areas served in Lucknow',
@@ -1314,7 +1358,7 @@ page({
     ['Home', '/'],
     ['Areas', '/areas/'],
   ],
-  body: `<section class="sec"><div class="wrap">${areaChips()}<p class="sub">Don't see your area? We cover most of Lucknow — <a href="/contact/">just ask</a>.</p></div></section>${finalCta}`,
+  body: `<section class="tht-section" aria-labelledby="all-area-h"><div class="tht-container">${secHead('all-area-h', 'Service Areas', 'Home tutors available', 'across Lucknow', 'Don\'t see your area? We cover most of Lucknow — <a href="/contact/">just ask</a>.')}${areaChips()}</div></section>${steps}${finalCta}`,
 });
 
 for (const [i, a] of areas.entries()) {
@@ -1380,7 +1424,13 @@ page({
   title: 'About Us | Education Hub Home Tutors, Lucknow',
   description:
     'Education Hub Home Tutors connects Lucknow families with verified, experienced home tutors. Learn about our story, values and how we choose tutors.',
-  h1: 'About Education Hub Home Tutors',
+  h1: 'We connect students with the <span class="h1-hl">right tutor</span>',
+  hero: {
+    badge: 'About us · Triveni Nagar, Lucknow',
+    accent: '#1546a0',
+    checks: ['Verified home tutors', 'Every class &amp; board', 'Free demo class', 'Free tutor replacement'],
+    form: 'About page',
+  },
   crumbs: [
     ['Home', '/'],
     ['About', '/about/'],
@@ -1389,7 +1439,6 @@ page({
   body: `
 <section class="sec"><div class="wrap split">
   <article class="prose">
-    ${homeScene}
     <h2>Our story</h2>
     <p>Education Hub Home Tutors started in Triveni Nagar, Lucknow with a simple idea: finding a good tutor shouldn't depend on luck or on who your neighbour knows. Parents deserve a reliable way to find someone qualified, safe and genuinely invested in their child's progress.</p>
     <p>Today we work with teachers and subject experts across Lucknow — from patient pre-primary educators to senior JEE and NEET faculty — and match them carefully with families who need them.</p>
@@ -1404,7 +1453,7 @@ page({
     <h2>Visit us</h2>
     <p>${esc(addressLine)}. Call <a href="${tel}">${SITE.phoneDisplay}</a> — ${SITE.hoursDisplay}.</p>
   </article>
-  <aside class="sticky">${leadForm('About page')}</aside>
+  ${sideCard(photo('about.jpg', `${SITE.name} — home tuition in Lucknow`, homeScene, false, '(max-width: 1024px) 92vw, 380px'), 'home')}
 </div></section>
 ${steps}${finalCta}`,
 });
@@ -1444,7 +1493,14 @@ page({
   title: 'Become a Home Tutor in Lucknow | Tuition Jobs | Education Hub',
   description:
     'Join Education Hub as a home tutor in Lucknow. Get tuition leads near your home, flexible timings and timely payments. Register free on WhatsApp.',
-  h1: 'Become a home tutor with Education Hub',
+  h1: 'Become a <span class="h1-hl">home tutor</span> in Lucknow',
+  hero: {
+    badge: 'Free registration · Tutors wanted',
+    accent: '#15803d',
+    checks: ['Tuition leads near your home', 'Choose your own timings', 'No joining fee', 'All subjects &amp; classes'],
+    side: tutorForm,
+    forTutors: true,
+  },
   crumbs: [
     ['Home', '/'],
     ['Become a Tutor', '/become-a-tutor/'],
@@ -1452,7 +1508,6 @@ page({
   body: `
 <section class="sec"><div class="wrap split">
   <article class="prose">
-    ${tutorScene}
     <h2>Why teach with us</h2>
     <ul class="ticks">
       <li>Tuition leads close to where you live</li>
@@ -1471,24 +1526,7 @@ page({
     </ol>
     <p>Already registered? See <a href="/tuition-jobs/">current tuition jobs</a>.</p>
   </article>
-  <aside class="sticky">
-  ${formCard(
-    'Tutor Registration',
-    'Get tuition jobs near your home',
-    `<form class="tht-form" data-tutor novalidate>
-    ${field('Full Name', '<input class="tht-input" name="name" required minlength="2" autocomplete="name" placeholder="Enter your full name">')}
-    ${field('Mobile Number', '<input class="tht-input" name="phone" type="tel" inputmode="numeric" required pattern="[6-9][0-9]{9}" maxlength="10" placeholder="10-digit mobile number">')}
-    ${field('Qualification', '<input class="tht-input" name="qualification" required placeholder="e.g. M.Sc Physics, B.Ed">')}
-    ${field('Subjects You Teach', '<input class="tht-input" name="subjects" required placeholder="e.g. Maths, Physics">')}
-    ${field('Classes You Teach', '<input class="tht-input" name="classes" placeholder="e.g. Class 6–12">')}
-    ${field('Your Area', `<select class="tht-select" name="area" required><option value="">Choose your locality</option>${areaOptions()}</select>`)}
-    ${field('Experience', '<select class="tht-select" name="experience"><option>Fresher</option><option>1–3 years</option><option>3–5 years</option><option>5+ years</option></select>')}
-    <p class="lead__err" role="alert" hidden></p>
-    <button class="tht-submit" type="submit">${fa('fa-whatsapp')} Register on WhatsApp</button>
-  </form>`,
-    'Free registration for tutors across Lucknow',
-  )}
-  </aside>
+  ${sideCard(tutorScene, 'tutoring job', 'Hi Education Hub 👋 I want to register as a home tutor.')}
 </div></section>`,
 });
 
@@ -1497,7 +1535,14 @@ page({
   current: '/tuition-jobs/',
   title: 'Home Tuition Jobs in Lucknow | Latest Tutor Vacancies | Education Hub',
   description: 'Latest home tuition jobs in Lucknow for all classes and subjects. Apply on WhatsApp and start teaching near your home.',
-  h1: 'Home tuition jobs in Lucknow',
+  h1: 'Home <span class="h1-hl">tuition jobs</span> in Lucknow',
+  hero: {
+    badge: 'Live jobs · Apply on WhatsApp',
+    accent: '#0891b2',
+    checks: ['New jobs every week', 'Near your home', 'All classes &amp; subjects', 'Free registration'],
+    side: tutorForm,
+    forTutors: true,
+  },
   crumbs: [
     ['Home', '/'],
     ['Tuition Jobs', '/tuition-jobs/'],
@@ -1519,7 +1564,13 @@ page({
   title: 'Home Tuition Fees in Lucknow 2026 | Class-wise Charges | Education Hub',
   description:
     'Transparent home tuition fees in Lucknow for Play Group to Class 12, JEE, NEET and Spoken English. Typical monthly ranges and what affects the price.',
-  h1: 'Home tuition fees in Lucknow',
+  h1: 'Transparent <span class="h1-hl">home tuition fees</span> in Lucknow',
+  hero: {
+    badge: 'Fees · No hidden charges',
+    accent: '#c2410c',
+    checks: ['Clear monthly ranges', 'Fee confirmed before demo', 'No advance payment', 'Free demo class'],
+    form: 'Fees page',
+  },
   crumbs: [
     ['Home', '/'],
     ['Fees', '/fees/'],
@@ -1546,7 +1597,13 @@ page({
   current: '/contact/',
   title: 'Contact Education Hub Home Tutors | Triveni Nagar, Lucknow',
   description: `Call ${SITE.phoneDisplay} or visit us at ${addressLine}. Open ${SITE.hoursDisplay}.`,
-  h1: 'Contact us',
+  h1: 'Let\'s <span class="h1-hl">connect</span>',
+  hero: {
+    badge: `Open ${esc(SITE.hoursDisplay)}`,
+    accent: '#0f766e',
+    checks: [`Call ${SITE.phoneDisplay}`, 'WhatsApp replies fast', 'Office in Triveni Nagar', 'Callback in 30 minutes'],
+    form: 'Contact page',
+  },
   crumbs: [
     ['Home', '/'],
     ['Contact', '/contact/'],
@@ -1565,7 +1622,7 @@ page({
     </ul>
     <div class="map"><iframe title="Map to ${esc(SITE.name)}" src="https://maps.google.com/maps?q=${encodeURIComponent('Triveni Nagar 3rd, Lucknow 226020')}&output=embed" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe></div>
   </div>
-  <aside class="sticky">${leadForm('Contact page')}</aside>
+  ${sideCard(homeScene, 'home')}
 </div></section>`,
 });
 
@@ -1576,7 +1633,12 @@ page({
   current: '/blog/',
   title: 'Study Tips & Parenting Guides | Education Hub Blog',
   description: 'Practical study tips, board exam plans and guides for Lucknow parents choosing a home tutor.',
-  h1: 'Education Hub blog',
+  h1: 'Home tuition <span class="h1-hl">guides</span> for Lucknow families',
+  hero: {
+    badge: 'Blog · Study tips &amp; guides',
+    accent: '#7c3aed',
+    checks: ['Board exam plans', 'Choosing a tutor', 'Study habits', 'Parent checklists'],
+  },
   schema: [
     itemListSchema(
       'Blog posts',
