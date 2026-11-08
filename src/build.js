@@ -4,6 +4,7 @@
 const fs = require('fs');
 const path = require('path');
 const { homeScene, tutorScene } = require('./illustrations');
+const { subjectArt, classArt, boardArt, examArt, areaArt, postArt, gallery } = require('./art');
 const { SITE, subjects, classes, boards, exams, areas, faqs, fees, posts, testimonials } = require('./data');
 
 const SRC = __dirname;
@@ -12,6 +13,8 @@ const BUILD_DATE = new Date().toISOString().slice(0, 10);
 
 const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 const abs = (p) => SITE.url + p;
+// Meta descriptions over ~160 chars get cut by Google; trim at a word boundary instead of mid-word.
+const clip = (str, max = 160) => (str.length <= max ? str : `${str.slice(0, str.lastIndexOf(' ', max - 1)).replace(/[,.;:—-]+$/, '')}…`);
 const wa = (text) => `https://wa.me/${SITE.whatsapp}?text=${encodeURIComponent(text)}`;
 const tel = `tel:${SITE.phone}`;
 const addressLine = `${SITE.address.street}, ${SITE.address.locality}, ${SITE.address.region} ${SITE.address.postalCode}`;
@@ -430,7 +433,7 @@ const areaChips = (list = areas) => `
 
 // ---------- Page shell ----------
 
-function page({ url, title, description, h1, body, crumbs, schema = [], current, ogType = 'website', noindex = false, lastmod }) {
+function page({ url, title, description, h1, body, crumbs, schema = [], current, ogType = 'website', noindex = false, lastmod, art }) {
   const schemas = [businessSchema, websiteSchema, ...(crumbs ? [breadcrumbSchema(crumbs)] : []), ...schema];
   const html = `<!doctype html>
 <html lang="${SITE.lang}">
@@ -475,7 +478,7 @@ ${schemas.map((s) => `<script type="application/ld+json">${JSON.stringify(s)}</s
 ${header(current)}
 <main id="main">
 ${crumbs ? breadcrumbs(crumbs) : ''}
-${h1 ? `<section class="phero"><div class="wrap"><h1>${h1}</h1>${description ? `<p>${esc(description)}</p>` : ''}</div></section>` : ''}
+${h1 ? `<section class="phero${art ? ' phero--art' : ''}"><div class="wrap"><div class="phero__copy"><h1>${h1}</h1>${description ? `<p>${esc(description)}</p>` : ''}</div>${art ? `<div class="phero__art">${art}</div>` : ''}</div></section>` : ''}
 ${body}
 </main>
 ${footer()}
@@ -533,6 +536,14 @@ ${trustStrip}
       <a class="card card--role" href="/become-a-tutor/"><span class="card__ic">🧑‍🏫</span><h3>I'm a tutor</h3><p>Get regular tuition leads near your home, flexible hours and timely payments.</p><span class="card__more">Become a tutor →</span></a>
       <a class="card card--role" href="/contact/"><span class="card__ic">🏫</span><h3>School / institute</h3><p>Need subject teachers, substitute faculty or exam-prep support? Let's talk.</p><span class="card__more">Partner with us →</span></a>
     </div>
+  </div>
+</section>
+
+<section class="sec" aria-labelledby="gal-h">
+  <div class="wrap">
+    <p class="eyebrow">Ways we teach</p>
+    <h2 class="h2" id="gal-h">Learning that fits every child</h2>
+    <div class="gallery">${gallery.map((g) => `<figure class="gallery__item">${g.svg}<figcaption><b>${g.title}</b><span>${g.text}</span></figcaption></figure>`).join('')}</div>
   </div>
 </section>
 
@@ -680,7 +691,7 @@ page({
   body: `<section class="sec"><div class="wrap"><p class="eyebrow">All subjects</p><h2 class="h2">Choose a subject to find your tutor</h2>${subjectCards()}</div></section>${steps}${ctaBand()}`,
 });
 
-for (const s of subjects) {
+for (const [i, s] of subjects.entries()) {
   const url = `/subjects/${s.slug}/`;
   const sFaqs = [
     {
@@ -698,10 +709,11 @@ for (const s of subjects) {
     },
   ];
   page({
+    art: subjectArt(s, i),
     url,
     current: '/subjects/',
     title: `${s.name} Home Tutor in Lucknow | Free Demo | Education Hub`,
-    description: `Verified ${s.name} home tutors in Lucknow for all classes and boards. ${s.blurb} Book a free demo class today.`.slice(0, 158),
+    description: clip(`Verified ${s.name} home tutors in Lucknow for all classes and boards. ${s.blurb} Book a free demo class today.`),
     h1: `${s.name} home tutor in Lucknow`,
     crumbs: [
       ['Home', '/'],
@@ -764,7 +776,7 @@ const feeFor = (c) => {
   return { range: '₹5,000 – ₹12,000', note: 'per month, depending on the course' };
 };
 
-for (const c of classes) {
+for (const [i, c] of classes.entries()) {
   const url = `/classes/${c.slug}/`;
   const relevant =
     c.group === 'pre'
@@ -783,10 +795,11 @@ for (const c of classes) {
     { q: 'How soon can the tutor start?', a: 'In most areas of Lucknow we arrange a free demo within 24 hours of your enquiry.' },
   ];
   page({
+    art: classArt(c, i),
     url,
     current: '/classes/',
     title: `${c.name} Home Tutor in Lucknow | Free Demo | Education Hub`,
-    description: `Experienced ${c.name} home tutors in Lucknow. ${c.focus} Free demo class at home.`.slice(0, 158),
+    description: clip(`Experienced ${c.name} home tutors in Lucknow. ${c.focus} Free demo class at home.`),
     h1: `${c.name} home tutor in Lucknow`,
     crumbs: [
       ['Home', '/'],
@@ -816,9 +829,10 @@ ${ctaBand(`Book a free ${c.name} demo class`)}`,
 
 // ---------- Boards ----------
 
-for (const b of boards) {
+for (const [i, b] of boards.entries()) {
   const url = `/boards/${b.slug}/`;
   page({
+    art: boardArt(b, i),
     url,
     current: '/classes/',
     title: `${b.name} Home Tutors in Lucknow | ${b.full} | Education Hub`.slice(0, 70),
@@ -853,7 +867,7 @@ ${ctaBand()}`,
 
 // ---------- Exams ----------
 
-for (const e of exams) {
+for (const [i, e] of exams.entries()) {
   const url = `/exams/${e.slug}/`;
   const eFaqs = [
     {
@@ -864,6 +878,7 @@ for (const e of exams) {
     { q: 'Can I take only one subject?', a: 'Yes, you can hire a tutor for a single subject or for all subjects.' },
   ];
   page({
+    art: examArt(e, i),
     url,
     current: '/classes/',
     title: `${e.short} Home Tutor in Lucknow | One-to-One Coaching | Education Hub`,
@@ -914,7 +929,7 @@ page({
   body: `<section class="sec"><div class="wrap">${areaChips()}<p class="sub">Don't see your area? We cover most of Lucknow — <a href="/contact/">just ask</a>.</p></div></section>${ctaBand()}`,
 });
 
-for (const a of areas) {
+for (const [i, a] of areas.entries()) {
   const url = `/areas/${a.slug}/`;
   const aFaqs = [
     { q: `How quickly can I get a home tutor in ${a.name}?`, a: `In ${a.name} we usually arrange a free demo class within 24 hours of your enquiry.` },
@@ -925,6 +940,7 @@ for (const a of areas) {
     },
   ];
   page({
+    art: areaArt(a, i),
     url,
     current: '/areas/',
     title: `Home Tutor in ${a.name}, Lucknow | Free Demo | Education Hub`,
@@ -1158,13 +1174,13 @@ page({
   ],
   body: `<section class="sec"><div class="wrap"><div class="cards cards--3">${posts
     .map(
-      (p) =>
-        `<a class="card" href="/blog/${p.slug}/"><time datetime="${p.date}">${new Date(p.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</time><h2 class="h3">${esc(p.title)}</h2><p>${esc(p.description)}</p><span class="card__more">Read more →</span></a>`,
+      (p, i) =>
+        `<a class="card card--post" href="/blog/${p.slug}/"><div class="card__art">${postArt(p, i)}</div><time datetime="${p.date}">${new Date(p.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</time><h2 class="h3">${esc(p.title)}</h2><p>${esc(p.description)}</p><span class="card__more">Read more →</span></a>`,
     )
     .join('')}</div></div></section>`,
 });
 
-for (const p of posts) {
+for (const [i, p] of posts.entries()) {
   const url = `/blog/${p.slug}/`;
   page({
     url,
@@ -1197,6 +1213,7 @@ for (const p of posts) {
     body: `
 <article class="sec"><div class="wrap narrow prose">
   <h1>${esc(p.title)}</h1>
+  <div class="cover">${postArt(p, i)}</div>
   <p class="meta"><time datetime="${p.date}">${new Date(p.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })}</time> · ${esc(SITE.name)}</p>
   ${p.body.map(([tag, text]) => `<${tag}>${esc(text)}</${tag}>`).join('\n  ')}
 </div></article>
