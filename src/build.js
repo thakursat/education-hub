@@ -6,7 +6,7 @@ const path = require('path');
 const { homeScene, tutorScene } = require('./illustrations');
 const { subjectArt, classArt, boardArt, examArt, areaArt, postArt, gallery } = require('./art');
 const { icons } = require('./icons');
-const { SITE, subjects, classes, boards, exams, areas, faqs, fees, posts, testimonials } = require('./data');
+const { SITE, subjects, classes, boards, exams, areas, faqs, fees, posts, testimonials, tutors } = require('./data');
 
 const SRC = __dirname;
 const DIST = path.join(SRC, '..', 'dist');
@@ -430,15 +430,54 @@ const testimonialsBlock = () =>
     <div class="tht-testimonials-grid" id="testi">${testimonials
       .map(
         (t, i) =>
-          `<figure class="tht-testi${i === 1 ? ' tht-testi--featured' : ''} tht-reveal"><div class="tht-testi__stars" aria-label="${t.rating} out of 5">${'★'.repeat(t.rating)}</div><blockquote class="tht-testi__text">${esc(t.text)}</blockquote><figcaption class="tht-testi__author"><div class="tht-testi__ava">${esc(
-            t.name
-              .split(' ')
-              .map((w) => w[0])
-              .join('')
-              .slice(0, 2),
-          )}</div><div><div class="tht-testi__name">${esc(t.name)}</div><div class="tht-testi__loc">${esc(t.detail)}</div></div></figcaption></figure>`,
+          `<figure class="tht-testi${i === 1 ? ' tht-testi--featured' : ''} tht-reveal"><div class="tht-testi__stars" aria-label="${t.rating} out of 5">${'★'.repeat(t.rating)}</div><blockquote class="tht-testi__text">${esc(t.text)}</blockquote><figcaption class="tht-testi__author"><div class="tht-testi__ava">${esc(initials(t.name))}</div><div><div class="tht-testi__name">${esc(t.name)}</div><div class="tht-testi__role">${esc(t.detail)}</div></div></figcaption></figure>`,
       )
       .join('')}</div>
+  </div>
+</section>`
+    : '';
+
+const initials = (name) =>
+  name
+    .split(' ')
+    .map((w) => w[0])
+    .join('')
+    .slice(0, 2)
+    .toUpperCase();
+
+// Renders nothing until real tutor profiles are added to data.js.
+const tutorsBlock = () =>
+  tutors.length
+    ? `
+<section class="tht-tutors-new" aria-labelledby="tutors-h">
+  <div class="tht-container">
+    <div class="tht-tutors-new__head">
+      <div class="tht-tutors-new__pill">${fa('fa-person-chalkboard')} Tutors</div>
+      <h2 class="tht-tutors-new__title" id="tutors-h">Meet Our <span>Top Experts</span></h2>
+      <p class="tht-tutors-new__sub">Verified home tutors at your doorstep in Lucknow.</p>
+    </div>
+    <div class="tht-tutors-new__scroll-wrapper"><div class="tht-tutors-new__scroll"><div class="tht-tutors-new__track">${tutors
+      .map(
+        (t) => `<article class="tnt-card">
+  <div class="tnt-card__header">
+    <div class="tnt-card__avatar">${t.photo ? `<img src="/assets/photos/tutors/${esc(t.photo)}" alt="${esc(t.name)}, home tutor in Lucknow" width="72" height="72" loading="lazy" decoding="async" style="width:100%;height:100%;object-fit:cover;border-radius:50%">` : esc(initials(t.name))}</div>
+    <div class="tnt-card__info">
+      <h3 class="tnt-card__name">${esc(t.name)}</h3>
+      <div class="tnt-card__subjects">${esc(t.subjects)}</div>
+      <div class="tnt-card__verified">${fa('fa-circle-check')} Verified Tutor</div>
+    </div>
+  </div>
+  <div class="tnt-card__body">
+    <div class="tnt-card__row qual">${fa('fa-graduation-cap')} ${esc(t.qualification)}</div>
+    <div class="tnt-card__row area">${fa('fa-location-dot')} ${esc(t.area)}, Lucknow</div>
+    <div class="tnt-card__row exp">${fa('fa-medal')} ${esc(t.experience)} experience</div>
+    <div class="tnt-card__row" style="background:#eff6ff;color:#1e40af">${fa('fa-house-laptop')} ${esc(t.mode)}${t.fee ? ` · <strong>${esc(t.fee)}</strong>` : ''}</div>
+    ${t.classes ? `<div class="tnt-card__row" style="background:#fefce8;color:#713f12">${fa('fa-book-open')} Teaches: ${esc(t.classes)}</div>` : ''}
+  </div>
+  <div class="tnt-card__footer"><a class="tnt-card__btn" href="${wa(`Hi Education Hub 👋 I'd like a free demo with ${t.name} (${t.subjects}).`)}" target="_blank" rel="noopener">Book Free Demo ${fa('fa-arrow-right')}</a></div>
+</article>`,
+      )
+      .join('')}</div></div></div>
   </div>
 </section>`
     : '';
@@ -547,7 +586,7 @@ const boardCards = () => `
 <div class="tht-boards-grid">${boards
   .map(
     (b, i) =>
-      `<a class="tht-board-card tht-reveal${i % 4 ? ` tht-reveal-d${i % 4}` : ''}" href="/boards/${b.slug}/"><div class="tht-board-logo">${fa(boardIcon[b.slug] || 'fa-school')}</div><div class="tht-board-name">${b.name}</div><div class="tht-board-full">${esc(b.full)}</div><div class="tht-board-badge">${b.badge}</div></a>`,
+      `<a class="tht-board-card tht-reveal${i % 4 ? ` tht-reveal-d${i % 4}` : ''}" href="/boards/${b.slug}/"><div class="tht-board-logo">${photo(`board-${b.slug}.png`, `${b.name} board logo`, fa(boardIcon[b.slug] || 'fa-school'))}</div><div class="tht-board-name">${b.name}</div><div class="tht-board-full">${esc(b.full)}</div><div class="tht-board-badge">${b.badge}</div></a>`,
   )
   .join('')}</div>`;
 
@@ -559,9 +598,58 @@ const areaChips = (list = areas) => `
   )
   .join('')}</div>`;
 
+// Photo slots: drop a file into src/assets/photos/ with the given name and it replaces the illustration on the next build.
+const PHOTOS = path.join(SRC, 'assets', 'photos');
+const photo = (file, alt, fallback) =>
+  fs.existsSync(path.join(PHOTOS, file))
+    ? `<img class="photo" src="/assets/photos/${file}" alt="${esc(alt)}" width="800" height="600" loading="lazy" decoding="async">`
+    : fallback;
+
+// Dark inner-page hero: copy and contact buttons on the left, the booking form on the right.
+// `accent` tints the glow and highlights, like the reference site's per-page theme colour.
+function heroBlock(h1, description, { badge, accent, checks, form, sub }) {
+  return `
+<section class="ip-hero" style="--t:${accent}">
+  <div class="tht-container ip-hero__grid">
+    <div class="ip-hero__copy">
+      <div class="ip-badge">${fa('fa-graduation-cap')} ${badge}</div>
+      <h1>${h1}</h1>
+      <p class="ip-sub">${esc(sub || description)}</p>
+      <div class="ip-checks">${checks.map((c) => `<span class="ip-check">${fa('fa-circle-check')} ${c}</span>`).join('')}</div>
+      <div class="ip-btns">
+        <a href="${wa(`Hi Education Hub 👋 I need a tutor (${form}).`)}" class="ip-btn-wa" target="_blank" rel="noopener">${fa('fa-whatsapp')} Request a Tutor on WhatsApp</a>
+        <a href="${tel}" class="ip-btn-call">${fa('fa-phone')} Call Now</a>
+      </div>
+      <div class="ip-proof">
+        <div class="ip-proof__item"><b>⚡ Matched within</b><span>24 hours</span></div>
+        <div class="ip-proof__div"></div>
+        <div class="ip-proof__item"><b>🎁 First class</b><span>Free demo</span></div>
+        <div class="ip-proof__div"></div>
+        <div class="ip-proof__item"><b>🛡️ Every tutor</b><span>ID-verified</span></div>
+      </div>
+    </div>
+    <div class="ip-hero__form">${leadForm(form)}</div>
+  </div>
+</section>`;
+}
+
+// Side column on detail pages, now that the form lives in the hero.
+const sideCard = (art, name) => `
+<aside class="sticky ip-side">
+  <div class="ip-side__art">${art}</div>
+  <ul class="ip-side__list">
+    <li>${fa('fa-gift')} Free demo class at home</li>
+    <li>${fa('fa-user-check')} ID &amp; address-verified tutors</li>
+    <li>${fa('fa-rotate')} Free tutor replacement</li>
+    <li>${fa('fa-indian-rupee-sign')} Clear monthly fees</li>
+  </ul>
+  <a class="ip-btn-wa" href="${wa(`Hi Education Hub 👋 I need a ${name} tutor.`)}" target="_blank" rel="noopener">${fa('fa-whatsapp')} WhatsApp Us</a>
+  <a class="ip-side__call" href="${tel}">${fa('fa-phone')} ${SITE.phoneDisplay}</a>
+</aside>`;
+
 // ---------- Page shell ----------
 
-function page({ url, title, description, h1, body, crumbs, schema = [], current, ogType = 'website', noindex = false, lastmod, art }) {
+function page({ url, title, description, h1, body, crumbs, schema = [], current, ogType = 'website', noindex = false, lastmod, art, hero }) {
   const schemas = [businessSchema, websiteSchema, ...(crumbs ? [breadcrumbSchema(crumbs)] : []), ...schema];
   const html = `<!doctype html>
 <html lang="${SITE.lang}">
@@ -608,7 +696,7 @@ ${schemas.map((s) => `<script type="application/ld+json">${JSON.stringify(s)}</s
 ${header(current)}
 <main id="main">
 ${crumbs ? breadcrumbs(crumbs) : ''}
-${h1 ? `<section class="phero${art ? ' phero--art' : ''}"><div class="wrap"><div class="phero__copy"><h1>${h1}</h1>${description ? `<p>${esc(description)}</p>` : ''}</div>${art ? `<div class="phero__art">${art}</div>` : ''}</div></section>` : ''}
+${hero ? heroBlock(h1, description, hero) : h1 ? `<section class="phero${art ? ' phero--art' : ''}"><div class="wrap"><div class="phero__copy"><h1>${h1}</h1>${description ? `<p>${esc(description)}</p>` : ''}</div>${art ? `<div class="phero__art">${art}</div>` : ''}</div></section>` : ''}
 ${body}
 </main>
 ${footer()}
@@ -716,7 +804,7 @@ ${trustStrip}
       <div class="ns-cards">${[
         [
           '/get-tutor/',
-          gallery[0].svg,
+          photo('parents.jpg', 'Parent and child with a home tutor in Lucknow', gallery[0].svg),
           'nb1',
           'fa-people-roof',
           'Parents',
@@ -725,7 +813,7 @@ ${trustStrip}
         ],
         [
           '/become-a-tutor/',
-          gallery[2].svg,
+          photo('tutors.jpg', 'Home tutor teaching a student in Lucknow', gallery[2].svg),
           'nb2',
           'fa-person-chalkboard',
           'Tutors',
@@ -734,7 +822,7 @@ ${trustStrip}
         ],
         [
           '/contact/',
-          gallery[5].svg,
+          photo('institutes.jpg', 'Classroom at a partner school in Lucknow', gallery[5].svg),
           'nb3',
           'fa-school',
           'Institutes',
@@ -792,6 +880,8 @@ ${trustStrip}
   </div>
 </section>
 
+${tutorsBlock()}
+
 <section class="tht-live-jobs-early tht-jobs-section" aria-labelledby="jobs-h">
   <div class="tht-container">
     <div class="tht-live-jobs-early__head">
@@ -827,7 +917,7 @@ ${trustStrip}
   <div class="tht-container">
     <div class="tht-about__grid">
       <div class="tht-about__visual">
-        <div class="tht-about__img">${homeScene}</div>
+        <div class="tht-about__img">${photo('about.jpg', `${SITE.name} — home tuition in Lucknow`, homeScene)}</div>
         <div class="tht-about__badge"><div class="badge-num">24h</div><div class="badge-text">Tutor Match</div></div>
       </div>
       <div class="tht-about__content">
@@ -968,12 +1058,18 @@ for (const [i, s] of subjects.entries()) {
     },
   ];
   page({
-    art: subjectArt(s, i),
     url,
     current: '/subjects/',
     title: `${s.name} Home Tutor in Lucknow | Free Demo | Education Hub`,
     description: clip(`Verified ${s.name} home tutors in Lucknow for all classes and boards. ${s.blurb} Book a free demo class today.`),
-    h1: `${s.name} home tutor in Lucknow`,
+    h1: `<span class="h1-hl">${s.name}</span> home tutor in Lucknow`,
+    hero: {
+      badge: `${s.short} · Home tuition · Lucknow`,
+      accent: '#1546a0',
+      checks: ['All classes &amp; boards', `Verified ${esc(s.short)} tutors`, 'Home visits &amp; online', 'Free demo session'],
+      form: `${s.name} tutor`,
+      sub: `Verified ${s.name} home tutors in Lucknow for all classes and boards. ${s.blurb}`,
+    },
     crumbs: [
       ['Home', '/'],
       ['Subjects', '/subjects/'],
@@ -995,9 +1091,12 @@ for (const [i, s] of subjects.entries()) {
       .map((a) => `<a href="/areas/${a.slug}/">${s.name} tutor in ${a.name}</a>`)
       .join(', ')}.</p>
   </article>
-  <aside class="sticky">${leadForm(`${s.name} tutor`)}</aside>
+  ${sideCard(subjectArt(s, i), s.name)}
 </div></section>
 <section class="sec sec--alt"><div class="wrap"><h2 class="h2">Other subjects</h2>${subjectCards(subjects.filter((x) => x.slug !== s.slug).slice(0, 4))}</div></section>
+${steps}
+${tutorsBlock()}
+${testimonialsBlock()}
 ${faqBlock(sFaqs, `${s.name} tuition — FAQs`)}
 ${finalCta}`,
   });
@@ -1054,12 +1153,17 @@ for (const [i, c] of classes.entries()) {
     { q: 'How soon can the tutor start?', a: 'In most areas of Lucknow we arrange a free demo within 24 hours of your enquiry.' },
   ];
   page({
-    art: classArt(c, i),
     url,
     current: '/classes/',
     title: `${c.name} Home Tutor in Lucknow | Free Demo | Education Hub`,
     description: clip(`Experienced ${c.name} home tutors in Lucknow. ${c.focus} Free demo class at home.`),
-    h1: `${c.name} home tutor in Lucknow`,
+    h1: `<span class="h1-hl">${c.name}</span> home tutor in Lucknow`,
+    hero: {
+      badge: `${esc(c.age)} · Home tuition · Lucknow`,
+      accent: '#c62828',
+      checks: ['CBSE, ICSE &amp; UP Board', `Verified ${c.name} tutors`, 'Home visits &amp; online', 'Free demo session'],
+      form: `${c.name} tutor`,
+    },
     crumbs: [
       ['Home', '/'],
       ['Classes', '/classes/'],
@@ -1079,8 +1183,11 @@ for (const [i, c] of classes.entries()) {
     <h2>${c.name} tutors near you</h2>
     ${areaChips(areas.slice(0, 9))}
   </article>
-  <aside class="sticky">${leadForm(`${c.name} tutor`)}</aside>
+  ${sideCard(classArt(c, i), c.name)}
 </div></section>
+${steps}
+${tutorsBlock()}
+${testimonialsBlock()}
 ${faqBlock(cFaqs, `${c.name} tuition — FAQs`)}
 ${finalCta}`,
   });
@@ -1091,12 +1198,17 @@ ${finalCta}`,
 for (const [i, b] of boards.entries()) {
   const url = `/boards/${b.slug}/`;
   page({
-    art: boardArt(b, i),
     url,
     current: '/classes/',
     title: `${b.name} Home Tutors in Lucknow | ${b.full} | Education Hub`.slice(0, 70),
     description: `Experienced ${b.name} home tutors in Lucknow for all classes and subjects. Board-focused teaching, regular tests and a free demo class.`,
-    h1: `${b.name} home tutors in Lucknow`,
+    h1: `<span class="h1-hl">${b.name}</span> home tutors in Lucknow`,
+    hero: {
+      badge: `${esc(b.badge)} · ${b.name} board`,
+      accent: '#6d28d9',
+      checks: ['Play group to Class 12', `${b.name} syllabus experts`, 'Home visits &amp; online', 'Free demo session'],
+      form: `${b.name} tutor`,
+    },
     crumbs: [
       ['Home', '/'],
       ['Boards', '/classes/'],
@@ -1117,9 +1229,12 @@ for (const [i, b] of boards.entries()) {
       .map((c) => `<a class="chip" href="/classes/${c.slug}/"><b>${c.name}</b><small>${b.name}</small></a>`)
       .join('')}</div>
   </article>
-  <aside class="sticky">${leadForm(`${b.name} tutor`)}</aside>
+  ${sideCard(boardArt(b, i), b.name)}
 </div></section>
 <section class="sec sec--alt"><div class="wrap"><h2 class="h2">Other boards</h2>${boardCards()}</div></section>
+${steps}
+${tutorsBlock()}
+${testimonialsBlock()}
 ${finalCta}`,
   });
 }
@@ -1137,7 +1252,6 @@ for (const [i, e] of exams.entries()) {
     { q: 'Can I take only one subject?', a: 'Yes, you can hire a tutor for a single subject or for all subjects.' },
   ];
   page({
-    art: examArt(e, i),
     url,
     current: '/classes/',
     title: `${e.short} Home Tutor in Lucknow | One-to-One Coaching | Education Hub`,
@@ -1145,7 +1259,13 @@ for (const [i, e] of exams.entries()) {
       0,
       158,
     ),
-    h1: `${e.name} home tutors in Lucknow`,
+    h1: `<span class="h1-hl">${e.name}</span> home tutors in Lucknow`,
+    hero: {
+      badge: `${e.short} coaching · One-to-one · Lucknow`,
+      accent: '#c2410c',
+      checks: [esc(e.subjects), 'Previous-year papers', 'Mock tests &amp; analysis', 'Free demo session'],
+      form: `${e.short} tutor`,
+    },
     crumbs: [
       ['Home', '/'],
       ['Exams', '/classes/'],
@@ -1160,8 +1280,11 @@ for (const [i, e] of exams.entries()) {
     <h2>What you get</h2>
     <ul class="ticks">${e.points.map((p) => `<li>${esc(p)}</li>`).join('')}</ul>
   </article>
-  <aside class="sticky">${leadForm(`${e.short} tutor`)}</aside>
+  ${sideCard(examArt(e, i), e.short)}
 </div></section>
+${steps}
+${tutorsBlock()}
+${testimonialsBlock()}
 ${faqBlock(eFaqs, `${e.short} coaching — FAQs`)}
 ${finalCta}`,
   });
@@ -1199,12 +1322,17 @@ for (const [i, a] of areas.entries()) {
     },
   ];
   page({
-    art: areaArt(a, i),
     url,
     current: '/areas/',
     title: `Home Tutor in ${a.name}, Lucknow | Free Demo | Education Hub`,
     description: `Verified home tutors in ${a.name}, Lucknow for Class 1–12, CBSE, ICSE, UP Board, JEE & NEET. Female & male tutors. Free demo within 24 hours.`,
-    h1: `Home tutor in ${a.name}, Lucknow`,
+    h1: `Home tutor in <span class="h1-hl">${a.name}</span>, Lucknow`,
+    hero: {
+      badge: `${esc(a.zone)} · Home tuition`,
+      accent: '#0f766e',
+      checks: ['All classes &amp; boards', `Tutors near ${a.name}`, 'Male &amp; female tutors', 'Free demo session'],
+      form: `Tutor in ${a.name}`,
+    },
     crumbs: [
       ['Home', '/'],
       ['Areas', '/areas/'],
@@ -1228,8 +1356,11 @@ for (const [i, a] of areas.entries()) {
     <h2>Nearby areas</h2>
     ${areaChips(areas.filter((x) => x.slug !== a.slug && (x.zone === a.zone || a.near.some((n) => n.includes(x.name)))).slice(0, 6))}
   </article>
-  <aside class="sticky">${leadForm(`Tutor in ${a.name}`)}</aside>
+  ${sideCard(areaArt(a, i), `home`)}
 </div></section>
+${steps}
+${tutorsBlock()}
+${testimonialsBlock()}
 ${faqBlock(aFaqs, `Home tuition in ${a.name} — FAQs`)}
 ${finalCta}`,
   });
@@ -1278,12 +1409,27 @@ page({
   title: 'Book a Free Demo Class | Get a Home Tutor in Lucknow | Education Hub',
   description:
     'Request a verified home tutor in Lucknow in under a minute. Free demo class, no advance payment, male & female tutors for all classes and boards.',
-  h1: 'Get a home tutor in Lucknow',
+  h1: 'Find your perfect <span class="h1-hl">home tutor</span> in Lucknow',
+  hero: {
+    badge: 'Free demo · No advance payment',
+    accent: '#1546a0',
+    checks: ['Play group to Class 12', 'CBSE, ICSE, UP Board, IB', 'Male &amp; female tutors', 'Free tutor replacement'],
+    form: 'Get tutor page',
+  },
   crumbs: [
     ['Home', '/'],
     ['Get a Tutor', '/get-tutor/'],
   ],
-  body: `<section class="sec"><div class="wrap narrow">${leadForm('Get tutor page')}</div></section>${trustStrip}${steps}`,
+  body: `${trustStrip}${steps}
+<section class="tht-classes" aria-labelledby="cls-h">
+  <div class="tht-container">
+    ${secHead('cls-h', 'Classes We Teach', 'Grades &amp;', 'Programmes')}
+    ${classGrid()}
+  </div>
+</section>
+${tutorsBlock()}
+${testimonialsBlock()}
+${faqBlock(faqs)}`,
 });
 
 page({

@@ -720,6 +720,13 @@ const posts = [
 ];
 
 // Real parent reviews only (name, area/class detail, 1–5 rating). The section stays hidden while this is empty.
+// Example: { name: 'Priya Sharma', detail: 'Class 8 · Aliganj', rating: 5, text: 'Our maths tutor…' }
 const testimonials = [];
 
-module.exports = { SITE, subjects, classes, boards, exams, areas, faqs, fees, posts, testimonials };
+// Real tutors only, shown with their consent. The "Meet our tutors" section stays hidden while this is empty.
+// photo is optional: a file in src/assets/photos/tutors/ (e.g. 'rahul-verma.jpg'); without it the card shows initials.
+// Example: { name: 'Rahul Verma', photo: '', subjects: 'Maths, Physics', qualification: 'M.Sc Physics, B.Ed', area: 'Aliganj',
+//            experience: '8 years', mode: 'Home & Online', classes: 'Class 9–12', fee: '₹6,000/month' }
+const tutors = [];
+
+module.exports = { SITE, subjects, classes, boards, exams, areas, faqs, fees, posts, testimonials, tutors };

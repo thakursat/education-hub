@@ -82,6 +82,7 @@ test('home page has the interactive sections and hides empty testimonials', () =
     assert.ok(home.includes(marker), marker);
   }
   assert.ok(!home.includes('id="testi"'), 'testimonials section should not render without real reviews');
+  assert.ok(!home.includes('id="tutors-h"'), 'tutor profiles should not render without real tutors');
 });
 
 test('every page uses the shared header, footer and floating contact buttons', () => {
@@ -111,4 +112,21 @@ test('pages are self-contained for fast mobile loads: inline icons, no icon font
   }
   const js = fs.readFileSync(path.join(DIST, 'main.js'), 'utf8');
   assert.ok(!js.includes('__ICON_') && !js.includes('__WHATSAPP__'), 'main.js placeholders replaced');
+});
+
+test('detail pages open with the dark hero and its booking form', () => {
+  const pick = [`subjects/${subjects[0].slug}`, `classes/${classes[0].slug}`, `areas/${areas[0].slug}`, 'boards/cbse', 'exams/jee', 'get-tutor'];
+  for (const p of pick) {
+    const html = fs.readFileSync(path.join(DIST, p, 'index.html'), 'utf8');
+    assert.match(html, /<section class="ip-hero"[\s\S]*?<h1>[\s\S]*?<form class="tht-form" id="lead" data-lead/, p);
+    assert.strictEqual((html.match(/data-lead/g) || []).length, 1, `one booking form on ${p}`);
+  }
+});
+
+test('photo slots fall back to illustrations until a photo file is added', () => {
+  const home = fs.readFileSync(path.join(DIST, 'index.html'), 'utf8');
+  for (const f of ['parents.jpg', 'tutors.jpg', 'institutes.jpg', 'about.jpg']) {
+    const exists = fs.existsSync(path.join(__dirname, '..', 'src', 'assets', 'photos', f));
+    assert.strictEqual(home.includes(`/assets/photos/${f}`), exists, f);
+  }
 });
