@@ -6,9 +6,9 @@ const SITE = {
   shortName: 'Education Hub',
   tagline: 'Learn Today · Grow Everyday · Succeed Tomorrow',
   url: 'https://www.educationhubhometutors.in',
-  phone: '+916386005007',
-  phoneDisplay: '63860 05007',
-  whatsapp: '916386005007',
+  phone: '+916386605007',
+  phoneDisplay: '63866 05007',
+  whatsapp: '916386605007',
   email: 'info@educationhubhometutors.in',
   address: {
     street: '538/Ka/195, Triveni Nagar 3rd',
@@ -586,7 +586,7 @@ const areas = [
 const faqs = [
   {
     q: 'How do I get a home tutor from Education Hub?',
-    a: 'Fill the short form on this page, call us on 63860 05007 or send a WhatsApp message. Tell us the class, subjects, board and your area. We shortlist a suitable tutor and fix a free demo class, usually within 24 hours.',
+    a: 'Fill the short form on this page, call us on 63866 05007 or send a WhatsApp message. Tell us the class, subjects, board and your area. We shortlist a suitable tutor and fix a free demo class, usually within 24 hours.',
   },
   {
     q: 'Is the first class really free?',
@@ -657,7 +657,7 @@ const posts = [
         'p',
         'Learning takes time. Review honestly after a month: is your child more confident, are homework and test scores improving? If not, ask for a change.',
       ],
-      ['p', 'Education Hub Home Tutors handles verification, demo classes and replacements for you. Call us on 63860 05007 to get started.'],
+      ['p', 'Education Hub Home Tutors handles verification, demo classes and replacements for you. Call us on 63866 05007 to get started.'],
     ],
   },
   {
@@ -683,7 +683,7 @@ const posts = [
       ['p', 'Treat pre-boards as the real thing. Work on neat presentation: headings, underlining key points, labelled diagrams and step-wise maths.'],
       ['h2', 'February: light, focused revision'],
       ['p', 'No new topics. Revise formula sheets, short notes and previous-year questions. Sleep well — tired students make silly mistakes.'],
-      ['p', 'Need a board-focused tutor in Lucknow? Our Class 10 tutors follow exactly this plan. Book a free demo on 63860 05007.'],
+      ['p', 'Need a board-focused tutor in Lucknow? Our Class 10 tutors follow exactly this plan. Book a free demo on 63866 05007.'],
     ],
   },
   {

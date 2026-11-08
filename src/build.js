@@ -769,7 +769,7 @@ page({
   current: '/',
   title: 'Home Tutors in Lucknow | Free Demo Class | Education Hub Home Tutors',
   description:
-    'Find verified home tutors in Lucknow for Class 1–12, CBSE, ICSE, UP Board, IB, JEE & NEET. Free demo class at your home within 24 hours. Call 63860 05007.',
+    'Find verified home tutors in Lucknow for Class 1–12, CBSE, ICSE, UP Board, IB, JEE & NEET. Free demo class at your home within 24 hours. Call 63866 05007.',
   schema: [faqSchema(faqs), serviceSchema('Home Tuition in Lucknow', 'One-to-one home tuition for all classes, boards and subjects across Lucknow.', '/')],
   body: `
 <div class="tht-page">
