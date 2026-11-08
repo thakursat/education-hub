@@ -138,7 +138,7 @@
       esc(j.id) +
       '</div></div></div><div class="job-live-card__body"><h3 class="job-live-title">' +
       esc(j.title) +
-      '</h3><div class="job-live-loc"><i class="fa-solid fa-location-dot" aria-hidden="true"></i> ' +
+      '</h3><div class="job-live-loc">__ICON_LOCATION__ ' +
       esc(j.area) +
       '</div><div class="job-live-grid">' +
       item('Budget', esc(j.budget || 'On request')) +
@@ -151,7 +151,7 @@
       WA +
       '?text=' +
       encodeURIComponent(msg) +
-      '" target="_blank" rel="noopener"><i class="fa-brands fa-whatsapp" aria-hidden="true"></i> Apply Now on WhatsApp</a></div></article>'
+      '" target="_blank" rel="noopener">__ICON_WHATSAPP__ Apply Now on WhatsApp</a></div></article>'
     );
   }
 

@@ -5,6 +5,7 @@ const fs = require('fs');
 const path = require('path');
 const { homeScene, tutorScene } = require('./illustrations');
 const { subjectArt, classArt, boardArt, examArt, areaArt, postArt, gallery } = require('./art');
+const { icons } = require('./icons');
 const { SITE, subjects, classes, boards, exams, areas, faqs, fees, posts, testimonials } = require('./data');
 
 const SRC = __dirname;
@@ -31,10 +32,8 @@ const CSS = ['styles.css', 'theme.css']
   .replace(/\s*([{}:;,>])\s*/g, '$1')
   .replace(/;}/g, '}')
   .trim();
-// Both stylesheets load without blocking render; the system font stack covers the first paint.
-const FONT_URL =
-  'https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Sora:wght@600;700;800&family=DM+Sans:wght@400;500;600&display=swap';
-const ICONS_URL = 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css';
+// The font stylesheet loads without blocking render; the system font stack covers the first paint.
+const FONT_URL = 'https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap';
 
 // ---------- Structured data ----------
 
@@ -153,7 +152,11 @@ const subjectIcon = {
   'social-science': 'fa-earth-asia',
   'spoken-english': 'fa-comments',
 };
-const fa = (name, set = 'solid') => `<i class="fa-${set} ${name}" aria-hidden="true"></i>`;
+// Icons are inline SVG (see icons.js); names keep Font Awesome's "fa-" prefix so they can be looked up on fontawesome.com.
+const fa = (name) => {
+  const [w, d] = icons[name.replace(/^fa-/, '')];
+  return `<svg class="ic" viewBox="0 0 ${w} 512" width="1em" height="1em" aria-hidden="true" focusable="false"><path fill="currentColor" d="${d}"/></svg>`;
+};
 const subjectFa = (slug) => fa(subjectIcon[slug] || 'fa-book');
 
 // Nav items that open a dropdown (desktop: hover/focus, mobile: tap to expand inside the menu panel).
@@ -206,11 +209,7 @@ function header(current) {
       </div>
       <div class="tb-col social-links">${
         social.length
-          ? social
-              .map(
-                ([name, url]) => `<a href="${url}" title="${name}" target="_blank" rel="noopener"><i class="fa-brands fa-${name}" aria-hidden="true"></i></a>`,
-              )
-              .join('')
+          ? social.map(([name, url]) => `<a href="${url}" title="${name}" aria-label="${name}" target="_blank" rel="noopener">${fa(name)}</a>`).join('')
           : `<span class="tb-loc">${fa('fa-location-dot')} Triveni Nagar, Lucknow · ${esc(SITE.hoursDisplay)}</span>`
       }</div>
       <div class="tb-col">
@@ -228,7 +227,7 @@ function header(current) {
         <span class="logo-card"><img src="/assets/emblem-112.jpg" width="56" height="42" alt="${esc(SITE.name)} logo" fetchpriority="high"></span>
         <span class="brand-text"><span class="brand-name">${esc(SITE.name)}</span><span class="brand-tag">Lucknow's Trusted Tutors</span></span>
       </a>
-      <a href="/get-tutor/" id="mobile-pill"><span class="blink">Get Tutor</span></a>
+      <a href="/get-tutor/" id="mobile-pill">Get Tutor</a>
       <button class="nav-toggler" id="burger" type="button" aria-controls="mainNavCollapse" aria-expanded="false" aria-label="Open menu"><span></span><span></span><span></span></button>
       <div id="mainNavCollapse">
         <ul class="nav-menu">${links}<li class="nav-item"><a class="nav-link btn-contact-nav" href="/contact/">Contact Us</a></li></ul>
@@ -240,7 +239,7 @@ function header(current) {
 
 function footer() {
   const col = (title, items, extra = '') =>
-    `<div class="ft-col"><h4>${title}</h4>${items.map(([n, u, cls]) => `<a href="${u}"${cls ? ` class="${cls}"` : ''}>${esc(n)}</a>`).join('')}${extra}</div>`;
+    `<div class="ft-col"><h3>${title}</h3>${items.map(([n, u, cls]) => `<a href="${u}"${cls ? ` class="${cls}"` : ''}>${esc(n)}</a>`).join('')}${extra}</div>`;
   const classLinks = classes.map((c) => [c.name, `/classes/${c.slug}/`]);
   const half = Math.ceil(classLinks.length / 2);
   const classSub = (list) => `<div class="ft-class-sub">${list.map(([n, u]) => `<a href="${u}">${esc(n)}</a>`).join('')}</div>`;
@@ -252,21 +251,21 @@ function footer() {
       <div class="ft-logo"><a href="/"><img src="/assets/logo-240.jpg" width="70" height="70" alt="${esc(SITE.name)} logo" loading="lazy" decoding="async"></a></div>
       <div><span class="ft-brand-tagline">${esc(SITE.tagline)}</span></div>
     </div>
-    <a href="${wa('Hi Education Hub, I need a home tutor in Lucknow.')}" class="ft-cta" target="_blank" rel="noopener">${fa('fa-whatsapp', 'brands')} Get a Tutor Today</a>
+    <a href="${wa('Hi Education Hub, I need a home tutor in Lucknow.')}" class="ft-cta" target="_blank" rel="noopener">${fa('fa-whatsapp')} Get a Tutor Today</a>
   </div>
   <div class="ft-grid" style="max-width:1400px;margin:0 auto;">
     ${col('By Subject', [...subjects.slice(0, 8).map((s) => [`${s.short} Tutor`, `/subjects/${s.slug}/`]), ['All Subjects →', '/subjects/', 'ft-hl']])}
-    <div class="ft-col"><h4>By Class</h4><div class="ft-class-wrap">${classSub(classLinks.slice(0, half))}${classSub(classLinks.slice(half))}</div></div>
+    <div class="ft-col"><h3>By Class</h3><div class="ft-class-wrap">${classSub(classLinks.slice(0, half))}${classSub(classLinks.slice(half))}</div></div>
     ${col(
       'By Board',
       boards.map((b) => [b.name.endsWith('Board') ? b.name : `${b.name} Board`, `/boards/${b.slug}/`]),
     )}
     <div class="ft-col">
-      <h4>Preference</h4>
+      <h3>Preference</h3>
       <a href="/get-tutor/" class="ft-pref-link"><span class="ft-pref-badge male">♂</span> Male Tutor</a>
       <a href="/get-tutor/" class="ft-pref-link"><span class="ft-pref-badge female">♀</span> Female Tutor</a>
       <div class="ft-col-divider"></div>
-      <h4 class="ft-sub-head">Fees</h4>
+      <h3 class="ft-sub-head">Fees</h3>
       <a href="/fees/">Fee Structure</a>
       <a href="/fees/" class="ft-hl">View Fee Chart →</a>
     </div>
@@ -287,9 +286,9 @@ function footer() {
       ['Disclaimer', '/disclaimer/'],
     ])}
     <div class="ft-col">
-      <h4>Contact Us</h4>
+      <h3>Contact Us</h3>
       <p>${fa('fa-phone')} <a href="${tel}">${SITE.phoneDisplay}</a></p>
-      <p>${fa('fa-whatsapp', 'brands')} <a href="${wa('Hi Education Hub, I need a home tutor in Lucknow.')}" target="_blank" rel="noopener">${SITE.phoneDisplay}</a></p>
+      <p>${fa('fa-whatsapp')} <a href="${wa('Hi Education Hub, I need a home tutor in Lucknow.')}" target="_blank" rel="noopener">${SITE.phoneDisplay}</a></p>
       <p>${fa('fa-location-dot')} <span>${esc(SITE.address.street)}, ${esc(SITE.address.locality)}, ${esc(SITE.address.region)} – ${SITE.address.postalCode}</span></p>
       <p>${fa('fa-envelope')} <a href="mailto:${SITE.email}">${SITE.email}</a></p>
       <p class="ft-hours">${fa('fa-clock')} ${esc(SITE.hoursDisplay)}</p>
@@ -380,7 +379,7 @@ const finalCta = `
     <div class="tht-cta__inner">
       <div class="tht-cta__card">
         <div class="tht-cta__badge"><span class="tht-live-dot" aria-hidden="true"></span> Book Today — Free Demo in 24 Hours</div>
-        <h2 class="tht-cta__h2" id="cta-h">Start Your Child's<span class="cta-hl"> Learning Journey</span><br>with<span class="cta-hl-gold"> ${esc(SITE.shortName)}</span></h2>
+        <h2 class="tht-cta__h2" id="cta-h">Start Your Child's<span class="cta-hl"> Learning Journey</span><br> with<span class="cta-hl-gold"> ${esc(SITE.shortName)}</span></h2>
         <p class="tht-cta__desc">Verified, experienced home tutors across Lucknow. No upfront payment, no risk — just a free demo class at your home.</p>
         <div class="tht-cta__stats">
           <div class="tht-cta__stat-item"><div class="tht-cta__stat-num">${subjects.length}+</div><div class="tht-cta__stat-lbl">Subjects</div></div>
@@ -389,7 +388,7 @@ const finalCta = `
           <div class="tht-cta__stat-item"><div class="tht-cta__stat-num">24hr</div><div class="tht-cta__stat-lbl">Tutor Match</div></div>
         </div>
         <div class="tht-cta__btns" style="margin-top:2rem;">
-          <a href="${wa('Hi Education Hub 👋 I would like to book a free demo class.')}" target="_blank" rel="noopener" class="tht-cta-btn-primary">${fa('fa-whatsapp', 'brands')} Book Free Demo Now</a>
+          <a href="${wa('Hi Education Hub 👋 I would like to book a free demo class.')}" target="_blank" rel="noopener" class="tht-cta-btn-primary">${fa('fa-whatsapp')} Book Free Demo Now</a>
           <a href="${tel}" class="tht-cta-btn-secondary">${fa('fa-phone')} Call: ${SITE.phoneDisplay}</a>
         </div>
         <div class="tht-cta__trust">
@@ -542,7 +541,7 @@ const boardIcon = {
   'up-board': 'fa-landmark',
   ib: 'fa-earth-americas',
   igcse: 'fa-globe',
-  nios: 'fa-laptop-house',
+  nios: 'fa-house-laptop',
 };
 const boardCards = () => `
 <div class="tht-boards-grid">${boards
@@ -598,10 +597,9 @@ function page({ url, title, description, h1, body, crumbs, schema = [], current,
 <link rel="apple-touch-icon" href="/assets/apple-touch-icon.png">
 <link rel="manifest" href="/site.webmanifest">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
+<link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="${FONT_URL}" media="print" onload="this.media='all'">
-<link rel="stylesheet" href="${ICONS_URL}" media="print" onload="this.media='all'">
-<noscript><link rel="stylesheet" href="${FONT_URL}"><link rel="stylesheet" href="${ICONS_URL}"></noscript>
+<noscript><link rel="stylesheet" href="${FONT_URL}"></noscript>
 <script>document.documentElement.classList.add('js')</script>
 <style>${CSS}</style>
 ${schemas.map((s) => `<script type="application/ld+json">${JSON.stringify(s)}</script>`).join('\n')}
@@ -673,7 +671,8 @@ page({
         <div class="tht-live-badge"><span class="tht-live-dot" aria-hidden="true"></span><span>Tutors available across <strong>Lucknow</strong> today</span></div>
         <h1 class="tht-hero__h1">
           <span class="static-line">Best Home Tutors for</span>
-          <span class="tht-rotate-outer" aria-label="${rotateWords.join(', ')} in Lucknow">
+          <span class="visually-hidden">${rotateWords.join(', ')}</span>
+          <span class="tht-rotate-outer" aria-hidden="true">
             <span class="tht-rotate-box" id="rotateBox">
               <span class="tht-rotate-sizer" id="rotateSizer" aria-hidden="true">${rotateWords[0]}</span>
               <span class="tht-rotate-stage" id="rotateStage" aria-hidden="true">${rotateWords.map((w, i) => `<span class="tht-rotate-item${i ? '' : ' is-active'}">${w}</span>`).join('')}</span>
@@ -818,7 +817,7 @@ ${trustStrip}
       </div>
       <div class="jobs-cta-btns">
         <a href="/become-a-tutor/" class="jobs-cta-primary">${fa('fa-user-plus')} Register as Tutor →</a>
-        <a href="${wa('Hi Education Hub 👋 I am looking for tuition jobs in Lucknow. Please share available jobs in my area.')}" target="_blank" rel="noopener" class="jobs-cta-wa">${fa('fa-whatsapp', 'brands')} Get Jobs on WhatsApp</a>
+        <a href="${wa('Hi Education Hub 👋 I am looking for tuition jobs in Lucknow. Please share available jobs in my area.')}" target="_blank" rel="noopener" class="jobs-cta-wa">${fa('fa-whatsapp')} Get Jobs on WhatsApp</a>
       </div>
     </div>
   </div>
@@ -1333,7 +1332,7 @@ page({
     ${field('Your Area', `<select class="tht-select" name="area" required><option value="">Choose your locality</option>${areaOptions()}</select>`)}
     ${field('Experience', '<select class="tht-select" name="experience"><option>Fresher</option><option>1–3 years</option><option>3–5 years</option><option>5+ years</option></select>')}
     <p class="lead__err" role="alert" hidden></p>
-    <button class="tht-submit" type="submit">${fa('fa-whatsapp', 'brands')} Register on WhatsApp</button>
+    <button class="tht-submit" type="submit">${fa('fa-whatsapp')} Register on WhatsApp</button>
   </form>`,
     'Free registration for tutors across Lucknow',
   )}
@@ -1566,7 +1565,15 @@ for (const p of pages) {
 }
 
 fs.cpSync(path.join(SRC, 'assets'), path.join(DIST, 'assets'), { recursive: true });
-fs.writeFileSync(path.join(DIST, 'main.js'), fs.readFileSync(path.join(SRC, 'main.js'), 'utf8').replace('__WHATSAPP__', SITE.whatsapp));
+// main.js builds job cards in the browser, so it gets the same inline icons as the templates.
+fs.writeFileSync(
+  path.join(DIST, 'main.js'),
+  fs
+    .readFileSync(path.join(SRC, 'main.js'), 'utf8')
+    .replace('__WHATSAPP__', SITE.whatsapp)
+    .replace('__ICON_LOCATION__', fa('fa-location-dot'))
+    .replace('__ICON_WHATSAPP__', fa('fa-whatsapp')),
+);
 fs.copyFileSync(path.join(SRC, 'jobs.json'), path.join(DIST, 'jobs.json'));
 
 const sitemapUrls = pages.filter((p) => !p.noindex);

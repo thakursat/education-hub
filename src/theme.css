@@ -332,7 +332,6 @@ button {
 .hero-blob-3 {
   position: absolute;
   border-radius: 50%;
-  filter: blur(90px);
   pointer-events: none;
   z-index: 0;
 }
@@ -688,7 +687,6 @@ button {
   box-shadow:
     0 30px 70px rgba(251, 146, 60, 0.2),
     0 12px 30px rgba(139, 92, 246, 0.18);
-  backdrop-filter: blur(8px);
   overflow: hidden;
 }
 .tht-form-card::before {
@@ -697,7 +695,6 @@ button {
   inset: -2px;
   border-radius: inherit;
   background: linear-gradient(135deg, rgba(251, 146, 60, 0.3), rgba(139, 92, 246, 0.2));
-  filter: blur(20px);
   opacity: 0.8;
   z-index: -1;
 }
@@ -1029,7 +1026,7 @@ button {
   padding: 0;
 }
 .tfs-wrap {
-  font-family: 'DM Sans', sans-serif;
+  font-family: var(--font);
   background: #f0f7ff;
   padding: 64px 20px 72px;
   position: relative;
@@ -1051,7 +1048,7 @@ button {
   margin: 0 auto;
 }
 .tfs-label {
-  font-family: 'Sora', sans-serif;
+  font-family: var(--font);
   font-size: 11px;
   font-weight: 700;
   letter-spacing: 0.14em;
@@ -1062,7 +1059,7 @@ button {
   margin-bottom: 10px;
 }
 .tfs-title {
-  font-family: 'Sora', sans-serif;
+  font-family: var(--font);
   font-size: clamp(1.7rem, 3.5vw, 2.5rem);
   font-weight: 800;
   color: #0f172a;
@@ -1124,7 +1121,7 @@ button {
   text-transform: uppercase;
   color: #1e3a5f;
   margin-bottom: 7px;
-  font-family: 'Sora', sans-serif;
+  font-family: var(--font);
 }
 .tfs-select {
   width: 100%;
@@ -1132,7 +1129,7 @@ button {
   border-radius: 10px;
   border: 1.5px solid #cbd5e1;
   background: #f8fafc;
-  font-family: 'DM Sans', sans-serif;
+  font-family: var(--font);
   font-size: 0.9rem;
   color: #1e3a5f;
   appearance: none;
@@ -1167,7 +1164,7 @@ button {
   gap: 10px;
   background: linear-gradient(135deg, #1d4ed8, #0ea5e9);
   color: #fff;
-  font-family: 'Sora', sans-serif;
+  font-family: var(--font);
   font-size: 1rem;
   font-weight: 700;
   padding: 15px 44px;
@@ -1202,7 +1199,7 @@ button {
   background: linear-gradient(90deg, transparent, #cbd5e1, transparent);
 }
 .tfs-divider-text {
-  font-family: 'Sora', sans-serif;
+  font-family: var(--font);
   font-size: 13px;
   font-weight: 700;
   color: #1d4ed8;
@@ -1223,7 +1220,7 @@ button {
   gap: 10px;
 }
 .tfs-links-title {
-  font-family: 'Sora', sans-serif;
+  font-family: var(--font);
   font-size: 1.1rem;
   font-weight: 700;
   color: #0f172a;
@@ -1234,7 +1231,7 @@ button {
   gap: 6px;
   background: #eff6ff;
   color: #1d4ed8;
-  font-family: 'Sora', sans-serif;
+  font-family: var(--font);
   font-size: 12px;
   font-weight: 700;
   padding: 7px 14px;
@@ -1304,7 +1301,7 @@ button {
   margin-left: auto;
   font-size: 10px;
   font-weight: 700;
-  font-family: 'Sora', sans-serif;
+  font-family: var(--font);
   padding: 2px 8px;
   border-radius: 999px;
   white-space: nowrap;
@@ -2117,7 +2114,7 @@ button {
     border-radius: 12px;
   }
 
-  .tht-subject-card__icon i {
+  .tht-subject-card__icon .ic {
     font-size: 18px !important;
   }
 
@@ -2187,7 +2184,7 @@ button {
   transition: all 0.35s var(--ease-spring);
 }
 
-.tht-subject-card__icon i {
+.tht-subject-card__icon .ic {
   font-size: 22px;
 }
 
@@ -3772,14 +3769,14 @@ button {
   letter-spacing: 0.2px;
   transition: color 0.2s;
 }
-.topbar .contact-link i {
+.topbar .contact-link .ic {
   font-size: 20px;
   transition: color 0.2s;
 }
 .topbar .contact-link:hover {
   color: var(--gold);
 }
-.topbar .contact-link:hover i {
+.topbar .contact-link:hover .ic {
   color: var(--gold) !important;
 }
 
@@ -3903,7 +3900,7 @@ button {
   display: block;
   font-size: 10px;
   font-weight: 600;
-  color: var(--gold);
+  color: #8a6414;
   letter-spacing: 2px;
   text-transform: uppercase;
   margin-top: 3px;
@@ -4082,7 +4079,7 @@ button {
     color 0.22s,
     transform 0.18s;
 }
-.menu-card i {
+.menu-card .ic {
   color: var(--navy);
   font-size: 14px;
   width: 18px;
@@ -4097,7 +4094,7 @@ button {
   box-shadow: 0 4px 14px rgba(11, 44, 107, 0.18);
   text-decoration: none;
 }
-.menu-card:hover i {
+.menu-card:hover .ic {
   color: #fff;
 }
 
@@ -4111,13 +4108,17 @@ button {
   }
 }
 
-@keyframes blinker {
-  50% {
-    opacity: 0;
-  }
+/* Blinking text fails contrast mid-blink; the pill pulses its outline instead. */
+#mobile-pill {
+  animation: pill-pulse 1.6s ease-out infinite;
 }
-.blink {
-  animation: blinker 1s linear infinite;
+@keyframes pill-pulse {
+  from {
+    box-shadow: 0 0 0 0 rgba(11, 44, 107, 0.35);
+  }
+  to {
+    box-shadow: 0 0 0 8px rgba(11, 44, 107, 0);
+  }
 }
 
 @media (max-width: 767px) {
@@ -4131,7 +4132,7 @@ button {
     font-size: 13px;
     gap: 5px;
   }
-  .topbar .contact-link i {
+  .topbar .contact-link .ic {
     font-size: 15px;
   }
   .topbar .wa-link .wa-svg {
@@ -4370,7 +4371,7 @@ button {
   padding-left: 4px;
 }
 
-.ft-col h4 {
+.ft-col h3 {
   font-family: 'Plus Jakarta Sans', sans-serif;
   font-size: 0.65rem;
   font-weight: 700;
@@ -4382,7 +4383,7 @@ button {
   position: relative;
   padding-bottom: 10px;
 }
-.ft-col h4::after {
+.ft-col h3::after {
   content: '';
   position: absolute;
   bottom: 0;
@@ -4392,7 +4393,7 @@ button {
   background: var(--ft-gold);
   opacity: 0.45;
 }
-.ft-col h4.ft-sub-head {
+.ft-col h3.ft-sub-head {
   margin-top: 22px;
   font-size: 0.6rem;
 }
@@ -4921,14 +4922,17 @@ header.site-hdr {
 }
 
 /* Welcome popup (the reference uses a Bootstrap modal with inline styles) */
+/* margin:auto is what centres a modal <dialog>; the global reset above removes the browser default. */
 .welcome {
+  margin: auto;
   border: none;
   border-radius: 24px;
   background: #f8f9ff;
   padding: 0;
   max-width: 520px;
   width: calc(100% - 32px);
-  overflow: hidden;
+  max-height: calc(100dvh - 32px);
+  overflow-y: auto;
   font-family: var(--font);
 }
 .welcome::backdrop {
@@ -5095,9 +5099,49 @@ header.site-hdr {
 .hl {
   padding-right: 0.12em;
 }
-.proof-chip i {
+.proof-chip .ic {
   color: var(--green);
 }
-.tht-form-trust i {
+.tht-form-trust .ic {
   color: #fbbf24;
+}
+
+.visually-hidden {
+  position: absolute !important;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+.ic {
+  display: inline-block;
+  flex-shrink: 0;
+  vertical-align: -0.125em;
+}
+
+/* Phones: skip rendering off-screen sections until they scroll near, keep form text at 16px so iOS doesn't zoom,
+   and give stacked footer links a full-size tap target. */
+.tht-page > section:not(.tht-hero),
+.tht-page > .tht-trust-strip,
+#footer {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 900px;
+}
+@media (max-width: 640px) {
+  .tht-input,
+  .tht-select,
+  .tfs-select {
+    font-size: 16px;
+  }
+  .ft-col a {
+    padding: 6px 0;
+  }
+  .trust-strip-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .trust-item {
+    padding: 14px 10px;
+    gap: 8px;
+  }
 }

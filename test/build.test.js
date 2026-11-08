@@ -103,3 +103,12 @@ test('lead forms keep the field names main.js sends to WhatsApp', () => {
 test('no page loads assets from the reference site', () => {
   for (const { file, html } of pages) assert.ok(!html.includes('thehometuitions'), file);
 });
+
+test('pages are self-contained for fast mobile loads: inline icons, no icon font, mobile viewport', () => {
+  for (const { file, html } of pages) {
+    assert.ok(!/font-awesome|class="fa-/.test(html), `icon font reference in ${file}`);
+    assert.match(html, /<meta name="viewport" content="width=device-width, initial-scale=1/, file);
+  }
+  const js = fs.readFileSync(path.join(DIST, 'main.js'), 'utf8');
+  assert.ok(!js.includes('__ICON_') && !js.includes('__WHATSAPP__'), 'main.js placeholders replaced');
+});
