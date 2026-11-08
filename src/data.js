@@ -1,15 +1,17 @@
 // Single source of truth for business details and page content.
-// Change SITE.url once the real domain is bought — every canonical, sitemap and schema URL follows it.
+// SITE.url is the live domain — every canonical, sitemap and schema URL follows it.
 
 const SITE = {
   name: 'Education Hub Home Tutors',
   shortName: 'Education Hub',
+  // The domain read as a name, so searches for it connect to the business in Google's results.
+  domainName: 'EduHomeTutor',
   tagline: 'Learn Today · Grow Everyday · Succeed Tomorrow',
-  url: 'https://www.educationhubhometutors.in',
+  url: 'https://eduhometutor.in',
   phone: '+916386605007',
   phoneDisplay: '63866 05007',
   whatsapp: '916386605007',
-  email: 'info@educationhubhometutors.in',
+  email: 'info@eduhometutor.in',
   address: {
     street: '538/Ka/195, Triveni Nagar 3rd',
     locality: 'Lucknow',
@@ -724,11 +726,54 @@ const posts = [
 const testimonials = [];
 
 // Real tutors only, shown with their consent. The "Meet our tutors" section stays hidden while this is empty.
-// Only name and subjects are required; any other field left out is simply not shown on the card.
+// Only name is required; any other field left out is simply not shown on the card.
 // photo: a file in src/assets/photos/tutors/ (square, ~200px); without it the card shows initials.
 // Example: { name: 'Rahul Verma', photo: 'rahul-verma.jpg', subjects: 'Maths, Physics', specialty: 'JEE Expert',
 //            qualification: 'M.Sc Physics, B.Ed', area: 'Aliganj', experience: '8 years', mode: 'Home & Online',
 //            classes: 'Class 9–12', fee: '₹6,000/month' }
-const tutors = [{ name: 'Shubhanshu Mishra', photo: 'shubhanshu-mishra.jpg', subjects: 'Biology, Chemistry', specialty: 'NEET Expert' }];
+const tutors = [
+  { name: 'Shubhanshu Mishra', photo: 'shubhanshu-mishra.jpg', subjects: 'Biology, Chemistry', specialty: 'NEET Expert' },
+  {
+    name: 'Nabila Irshad',
+    photo: 'nabila-irshad.jpg',
+    subjects: 'All Subjects, Accounts, Micro Economics',
+    specialty: 'Primary to Junior Expert',
+    qualification: 'M.Com, B.Ed',
+    area: 'Hazratganj',
+    experience: '5 years',
+    classes: 'Primary to Junior (all subjects); Class 9–12 Accounts & Micro Economics',
+  },
+  {
+    name: 'Adharsh Mishra',
+    photo: 'adharsh-mishra.jpg',
+    subjects: 'Maths, Physics',
+    specialty: 'JEE & NEET Physics Specialist',
+    area: 'Gomti Nagar Extension',
+    classes: 'Class 11–12 Maths & Physics; JEE & NEET Physics',
+  },
+  {
+    name: 'Abhishek Pandey',
+    photo: 'abhishek-pandey.jpg',
+    subjects: 'Accounts, Micro Economics',
+    specialty: 'Subject Expert',
+    area: 'Gomti Nagar, Ashiyana',
+    classes: 'Class 9 to B.Com',
+  },
+  {
+    name: 'Arpit Singh',
+    photo: 'arpit-singh.jpg',
+    specialty: 'Class 6–10 Specialist',
+    qualification: 'MCA',
+    area: 'Malhaur',
+    classes: 'Class 6–10',
+  },
+  {
+    name: 'Subhashini Mourya',
+    photo: 'subhashini-mourya.jpg',
+    specialty: 'Prep to Class 8',
+    area: 'Chinhat, Gomti Nagar',
+    classes: 'Prep to Class 8',
+  },
+];
 
 module.exports = { SITE, subjects, classes, boards, exams, areas, faqs, fees, posts, testimonials, tutors };

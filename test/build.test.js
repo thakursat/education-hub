@@ -156,3 +156,12 @@ test('the tutor registration form appears where tutors sign up', () => {
     assert.match(html, /<section class="ip-hero[\s\S]*?<form class="tht-form" data-tutor/, p);
   }
 });
+
+test('every page points at the live domain', () => {
+  assert.strictEqual(SITE.url, 'https://eduhometutor.in');
+  for (const { file, html } of pages) {
+    assert.ok(!/educationhubhometutors|www\.eduhometutor/.test(html), `old or www domain in ${file}`);
+    if (!file.endsWith('404.html')) assert.match(html, /<link rel="canonical" href="https:\/\/eduhometutor\.in\//, file);
+  }
+  assert.match(fs.readFileSync(path.join(DIST, 'robots.txt'), 'utf8'), /Sitemap: https:\/\/eduhometutor\.in\/sitemap\.xml/);
+});

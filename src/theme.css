@@ -5536,9 +5536,7 @@ header.site-hdr {
   font-weight: 700;
   font-family: var(--font);
   margin-bottom: 6px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  line-height: 1.35;
 }
 .tnt-card__verified {
   display: inline-flex;
@@ -5914,5 +5912,36 @@ picture.photo img {
   .tht-about__stat-label,
   .jobs-cta-label {
     font-size: 12px;
+  }
+}
+.tht-tutors-nav[hidden] {
+  display: none;
+}
+.tht-tutors-nav__arrow {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--blue-600);
+}
+.tht-tutors-nav__arrow:first-child .ic {
+  transform: rotate(180deg);
+}
+/* 24px tap area around the visible pill (padding is painted transparent via background-clip) */
+.tht-tutors-nav__dot {
+  border: 0;
+  box-sizing: content-box;
+  padding: 7px 6px;
+  background-clip: content-box;
+}
+@media (max-width: 640px) {
+  .tht-tutors-nav__arrow {
+    width: 48px;
+    height: 48px;
+  }
+  .tht-tutors-nav__dot {
+    width: 12px;
+  }
+  .tht-tutors-nav__dot.active {
+    width: 28px;
   }
 }

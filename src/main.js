@@ -324,6 +324,62 @@
     });
   });
 
+  // Phones show tutor cards as a swipe row; arrows and dots move it and track which card is in view.
+  var tutorScroll = document.getElementById('tutor-scroll');
+  var tutorNav = document.querySelector('[data-tutor-nav]');
+  if (tutorScroll && tutorNav) {
+    var cards = tutorScroll.querySelectorAll('.tnt-card');
+    var dots = tutorNav.querySelectorAll('.tht-tutors-nav__dot');
+    var arrows = tutorNav.querySelectorAll('[data-dir]');
+    var current = function () {
+      var left = tutorScroll.getBoundingClientRect().left;
+      var best = 0;
+      cards.forEach(function (c, i) {
+        if (Math.abs(c.getBoundingClientRect().left - left) < Math.abs(cards[best].getBoundingClientRect().left - left)) best = i;
+      });
+      return best;
+    };
+    var snapTimer;
+    var go = function (i) {
+      i = Math.max(0, Math.min(cards.length - 1, i));
+      var card = cards[i].getBoundingClientRect();
+      var box = tutorScroll.getBoundingClientRect();
+      // The theme snaps with scroll-snap-stop: always, which would stop a jump at the next card; pause snapping while we move.
+      tutorScroll.style.setProperty('scroll-snap-type', 'none', 'important');
+      tutorScroll.scrollBy({ left: card.left + card.width / 2 - (box.left + box.width / 2), behavior: reduceMotion ? 'auto' : 'smooth' });
+      clearTimeout(snapTimer);
+      snapTimer = setTimeout(function () {
+        tutorScroll.style.removeProperty('scroll-snap-type');
+      }, 700);
+    };
+    var sync = function () {
+      var i = current();
+      dots.forEach(function (d, n) {
+        d.classList.toggle('active', n === i);
+      });
+      arrows[0].disabled = i === 0;
+      arrows[1].disabled = i === cards.length - 1;
+    };
+    var update = function () {
+      // Only show the controls when the row actually scrolls (phones); on desktop the cards sit in a grid.
+      tutorNav.hidden = tutorScroll.scrollWidth <= tutorScroll.clientWidth + 2;
+      sync();
+    };
+    arrows.forEach(function (b) {
+      b.addEventListener('click', function () {
+        go(current() + Number(b.getAttribute('data-dir')));
+      });
+    });
+    dots.forEach(function (d) {
+      d.addEventListener('click', function () {
+        go(Number(d.getAttribute('data-i')));
+      });
+    });
+    tutorScroll.addEventListener('scroll', sync, { passive: true });
+    window.addEventListener('resize', update);
+    update();
+  }
+
   // "Refresh" shows a different dozen of the popular-search links; all of them are in the HTML for crawlers.
   var refresh = document.getElementById('tfs-refresh-btn');
   var linkGrid = document.getElementById('tfs-links-grid');

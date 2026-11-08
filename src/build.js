@@ -44,7 +44,7 @@ const businessSchema = {
   '@type': ['EducationalOrganization', 'LocalBusiness'],
   '@id': orgId,
   name: SITE.name,
-  alternateName: SITE.shortName,
+  alternateName: [SITE.shortName, SITE.domainName],
   slogan: SITE.tagline,
   url: abs('/'),
   logo: abs('/assets/logo-512.jpg'),
@@ -96,6 +96,8 @@ const websiteSchema = {
   '@id': abs('/#website'),
   url: abs('/'),
   name: SITE.name,
+  // Google's "site name" in results reads these; the domain spelling helps people who search for it.
+  alternateName: [SITE.shortName, SITE.domainName],
   inLanguage: SITE.lang,
   publisher: { '@id': orgId },
 };
@@ -456,14 +458,14 @@ const tutorsBlock = () =>
       <h2 class="tht-tutors-new__title" id="tutors-h">Meet Our <span>Top Experts</span></h2>
       <p class="tht-tutors-new__sub">Verified home tutors at your doorstep in Lucknow.</p>
     </div>
-    <div class="tht-tutors-new__scroll-wrapper"><div class="tht-tutors-new__scroll"><div class="tht-tutors-new__track">${tutors
+    <div class="tht-tutors-new__scroll-wrapper"><div class="tht-tutors-new__scroll" id="tutor-scroll"><div class="tht-tutors-new__track">${tutors
       .map(
         (t) => `<article class="tnt-card">
   <div class="tnt-card__header">
     <div class="tnt-card__avatar">${t.photo ? `<img src="/assets/photos/tutors/${esc(t.photo)}" alt="${esc(t.name)}, home tutor in Lucknow" width="72" height="72" loading="lazy" decoding="async" style="width:100%;height:100%;object-fit:cover;border-radius:50%">` : esc(initials(t.name))}</div>
     <div class="tnt-card__info">
       <h3 class="tnt-card__name">${esc(t.name)}</h3>
-      <div class="tnt-card__subjects">${esc(t.subjects)}</div>
+      ${t.subjects ? `<div class="tnt-card__subjects">${esc(t.subjects)}</div>` : ''}
       <div class="tnt-card__verified">${fa('fa-circle-check')} Verified Tutor</div>
     </div>
   </div>
@@ -478,10 +480,15 @@ const tutorsBlock = () =>
   ]
     .filter(Boolean)
     .join('')}</div>
-  <div class="tnt-card__footer"><a class="tnt-card__btn" href="${wa(`Hi Education Hub 👋 I'd like a free demo with ${t.name} (${t.subjects}).`)}" target="_blank" rel="noopener">Book Free Demo ${fa('fa-arrow-right')}</a></div>
+  <div class="tnt-card__footer"><a class="tnt-card__btn" href="${wa(`Hi Education Hub 👋 I'd like a free demo with ${t.name}${t.subjects ? ` (${t.subjects})` : ''}.`)}" target="_blank" rel="noopener">Book Free Demo ${fa('fa-arrow-right')}</a></div>
 </article>`,
       )
       .join('')}</div></div></div>
+    <div class="tht-tutors-nav" data-tutor-nav hidden>
+      <button class="tht-tutors-nav__arrow" type="button" data-dir="-1" aria-label="Previous tutor">${fa('fa-arrow-right')}</button>
+      <div class="tht-tutors-nav__dots">${tutors.map((t, i) => `<button class="tht-tutors-nav__dot${i ? '' : ' active'}" type="button" data-i="${i}" aria-label="Show ${esc(t.name)}"></button>`).join('')}</div>
+      <button class="tht-tutors-nav__arrow" type="button" data-dir="1" aria-label="Next tutor">${fa('fa-arrow-right')}</button>
+    </div>
   </div>
 </section>`
     : '';
