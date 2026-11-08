@@ -3,7 +3,7 @@ const assert = require('node:assert');
 const { execFileSync } = require('node:child_process');
 const fs = require('node:fs');
 const path = require('node:path');
-const { SITE, subjects, classes, areas } = require('../src/data');
+const { SITE, subjects, classes, areas, tutors } = require('../src/data');
 
 const DIST = path.join(__dirname, '..', 'dist');
 let pages = [];
@@ -82,7 +82,8 @@ test('home page has the interactive sections and hides empty testimonials', () =
     assert.ok(home.includes(marker), marker);
   }
   assert.ok(!home.includes('id="testi"'), 'testimonials section should not render without real reviews');
-  assert.ok(!home.includes('id="tutors-h"'), 'tutor profiles should not render without real tutors');
+  assert.strictEqual(home.includes('id="tutors-h"'), tutors.length > 0, 'tutor profiles render only when data.js has tutors');
+  for (const t of tutors) assert.ok(home.includes(`>${t.name}</h3>`), `tutor card for ${t.name}`);
 });
 
 test('every page uses the shared header, footer and floating contact buttons', () => {

@@ -467,13 +467,17 @@ const tutorsBlock = () =>
       <div class="tnt-card__verified">${fa('fa-circle-check')} Verified Tutor</div>
     </div>
   </div>
-  <div class="tnt-card__body">
-    <div class="tnt-card__row qual">${fa('fa-graduation-cap')} ${esc(t.qualification)}</div>
-    <div class="tnt-card__row area">${fa('fa-location-dot')} ${esc(t.area)}, Lucknow</div>
-    <div class="tnt-card__row exp">${fa('fa-medal')} ${esc(t.experience)} experience</div>
-    <div class="tnt-card__row" style="background:#eff6ff;color:#1e40af">${fa('fa-house-laptop')} ${esc(t.mode)}${t.fee ? ` · <strong>${esc(t.fee)}</strong>` : ''}</div>
-    ${t.classes ? `<div class="tnt-card__row" style="background:#fefce8;color:#713f12">${fa('fa-book-open')} Teaches: ${esc(t.classes)}</div>` : ''}
-  </div>
+  <div class="tnt-card__body">${[
+    t.specialty && `<div class="tnt-card__row exp">${fa('fa-bullseye')} ${esc(t.specialty)}</div>`,
+    t.qualification && `<div class="tnt-card__row qual">${fa('fa-graduation-cap')} ${esc(t.qualification)}</div>`,
+    t.area && `<div class="tnt-card__row area">${fa('fa-location-dot')} ${esc(t.area)}, Lucknow</div>`,
+    t.experience && `<div class="tnt-card__row exp">${fa('fa-medal')} ${esc(t.experience)} experience</div>`,
+    (t.mode || t.fee) &&
+      `<div class="tnt-card__row" style="background:#eff6ff;color:#1e40af">${fa('fa-house-laptop')} ${[t.mode && esc(t.mode), t.fee && `<strong>${esc(t.fee)}</strong>`].filter(Boolean).join(' · ')}</div>`,
+    t.classes && `<div class="tnt-card__row" style="background:#fefce8;color:#713f12">${fa('fa-book-open')} Teaches: ${esc(t.classes)}</div>`,
+  ]
+    .filter(Boolean)
+    .join('')}</div>
   <div class="tnt-card__footer"><a class="tnt-card__btn" href="${wa(`Hi Education Hub 👋 I'd like a free demo with ${t.name} (${t.subjects}).`)}" target="_blank" rel="noopener">Book Free Demo ${fa('fa-arrow-right')}</a></div>
 </article>`,
       )

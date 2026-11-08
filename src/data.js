@@ -724,9 +724,11 @@ const posts = [
 const testimonials = [];
 
 // Real tutors only, shown with their consent. The "Meet our tutors" section stays hidden while this is empty.
-// photo is optional: a file in src/assets/photos/tutors/ (e.g. 'rahul-verma.jpg'); without it the card shows initials.
-// Example: { name: 'Rahul Verma', photo: '', subjects: 'Maths, Physics', qualification: 'M.Sc Physics, B.Ed', area: 'Aliganj',
-//            experience: '8 years', mode: 'Home & Online', classes: 'Class 9–12', fee: '₹6,000/month' }
-const tutors = [];
+// Only name and subjects are required; any other field left out is simply not shown on the card.
+// photo: a file in src/assets/photos/tutors/ (square, ~200px); without it the card shows initials.
+// Example: { name: 'Rahul Verma', photo: 'rahul-verma.jpg', subjects: 'Maths, Physics', specialty: 'JEE Expert',
+//            qualification: 'M.Sc Physics, B.Ed', area: 'Aliganj', experience: '8 years', mode: 'Home & Online',
+//            classes: 'Class 9–12', fee: '₹6,000/month' }
+const tutors = [{ name: 'Shubhanshu Mishra', photo: 'shubhanshu-mishra.jpg', subjects: 'Biology, Chemistry', specialty: 'NEET Expert' }];
 
 module.exports = { SITE, subjects, classes, boards, exams, areas, faqs, fees, posts, testimonials, tutors };

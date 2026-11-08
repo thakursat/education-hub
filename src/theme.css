@@ -5424,9 +5424,11 @@ header.site-hdr {
     display: block !important;
     overflow: visible !important;
   }
+  /* Up to three cards per row, centred, so one or two tutors don't sit off to the left */
   .tht-tutors-new__track {
     display: grid !important;
-    grid-template-columns: repeat(3, 1fr) !important;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 380px)) !important;
+    justify-content: center;
     gap: 24px !important;
     width: 100% !important;
   }
