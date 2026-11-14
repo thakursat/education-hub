@@ -66,6 +66,11 @@ test('sitemap lists every indexable page and excludes the 404', () => {
   assert.match(fs.readFileSync(path.join(DIST, 'robots.txt'), 'utf8'), /Sitemap: https:\/\//);
 });
 
+test('publishes the IndexNow key file at the site root', () => {
+  assert.match(SITE.indexNowKey, /^[a-f0-9]{32}$/);
+  assert.strictEqual(fs.readFileSync(path.join(DIST, `${SITE.indexNowKey}.txt`), 'utf8'), SITE.indexNowKey);
+});
+
 test('home page has the interactive sections and hides empty testimonials', () => {
   const home = fs.readFileSync(path.join(DIST, 'index.html'), 'utf8');
   for (const marker of [

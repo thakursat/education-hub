@@ -6,6 +6,7 @@ Static, SEO-first, mobile-first site for home tuition in Lucknow. No framework, 
 
 - `npm run build` — generates the full site into `dist/`
 - `npm start` — build + serve locally at http://localhost:4321
+- `npm run indexnow` — after a deploy is live, submits every sitemap URL to Bing/Yandex via IndexNow
 
 ## Editing
 

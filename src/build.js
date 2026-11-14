@@ -1901,6 +1901,8 @@ Sitemap: ${abs('/sitemap.xml')}
 `,
 );
 
+fs.writeFileSync(path.join(DIST, `${SITE.indexNowKey}.txt`), SITE.indexNowKey);
+
 fs.writeFileSync(
   path.join(DIST, 'site.webmanifest'),
   JSON.stringify(

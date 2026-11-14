@@ -28,6 +28,8 @@ const SITE = {
     youtube: '',
   },
   lang: 'en-IN',
+  // IndexNow key (public by design): served at /<key>.txt so Bing, Yandex and other IndexNow engines accept our URL submissions.
+  indexNowKey: 'fc0b3f81fa0c2a2465f119f2fb362bdd',
 };
 
 const subjects = [
