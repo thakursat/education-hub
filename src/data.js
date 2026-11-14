@@ -2,11 +2,11 @@
 // SITE.url is the live domain — every canonical, sitemap and schema URL follows it.
 
 const SITE = {
-  name: 'Education Hub Home Tutors',
-  shortName: 'Education Hub',
-  // The domain read as a name, so searches for it connect to the business in Google's results.
-  domainName: 'EduHomeTutor',
-  tagline: 'Learn Today · Grow Everyday · Succeed Tomorrow',
+  // The brand is the domain name, so searches for either connect to the business in Google's results.
+  name: 'EduHomeTutor',
+  shortName: 'EduHomeTutor',
+  alternateNames: ['Edu Home Tutor', 'eduhometutor.in'],
+  tagline: 'Learn Today · Grow Every Day · Succeed Tomorrow',
   url: 'https://eduhometutor.in',
   phone: '+916386605007',
   phoneDisplay: '63866 05007',
@@ -777,6 +777,70 @@ const classGuide = {
 };
 
 // Short local description for each area page.
+// Every Lucknow locality we place tutors in, for the A–Z directory on /areas/. Names in `areas` get their own page and are merged in at build time.
+const localities = [
+  'Aishbagh',
+  'Alamnagar',
+  'Aminabad',
+  'Amausi',
+  'Arjunganj',
+  'Avadh Vihar Yojana',
+  'Badshah Nagar',
+  'Bakshi Ka Talab',
+  'Balaganj',
+  'Bangla Bazar',
+  'Bhootnath',
+  'Bijnaur',
+  'Cantonment',
+  'Charbagh',
+  'Daliganj',
+  'Dilkusha',
+  'Dubagga',
+  'Faizabad Road',
+  'Faizullaganj',
+  'Ganeshganj',
+  'Golaganj',
+  'Gomti Nagar Extension',
+  'Gudamba',
+  'Hasanganj',
+  'Husainganj',
+  'Ismailganj',
+  'Jankipuram Extension',
+  'Kaiserbagh',
+  'Kakori',
+  'Kalyanpur',
+  'Kanpur Road',
+  'Khadra',
+  'Khurram Nagar',
+  'Krishna Nagar',
+  'Kursi Road',
+  'Lalbagh',
+  'LDA Colony',
+  'Malihabad',
+  'Matiyari',
+  'Mohanlalganj',
+  'Munshi Pulia',
+  'Nadarganj',
+  'Naka Hindola',
+  'Narhi',
+  'Nishatganj',
+  'Paper Mill Colony',
+  'Para',
+  'Puraniya',
+  'Rajendra Nagar',
+  'Sadar Bazar',
+  'Sarojini Nagar',
+  'SGPGI',
+  'Shaheed Path',
+  'Takrohi',
+  'Thakurganj',
+  'Transport Nagar',
+  'Utrathia',
+  'Vibhuti Khand',
+  'Vrindavan Yojana',
+  'Yahiyaganj',
+];
+
 const areaAbout = {
   'triveni-nagar':
     'Triveni Nagar sits off Sitapur Road in north Lucknow, between Aliganj and Madiyaon. Families here can visit our office in Triveni Nagar 3rd to meet the team before the first class.',
@@ -805,7 +869,7 @@ const areaAbout = {
 
 const faqs = [
   {
-    q: 'How do I get a home tutor from Education Hub?',
+    q: 'How do I get a home tutor from EduHomeTutor?',
     a: 'Fill the short form on this page, call us on 63866 05007 or send a WhatsApp message. Tell us the class, subjects, board and your area. We shortlist a suitable tutor and fix a free demo class, usually within 24 hours.',
   },
   {
@@ -878,7 +942,7 @@ const posts = [
         'p',
         'Learning takes time. Review honestly after a month: is your child more confident, are homework and test scores improving? If not, ask for a change.',
       ],
-      ['p', 'Education Hub Home Tutors handles verification, demo classes and replacements for you. Call us on 63866 05007 to get started.'],
+      ['p', 'EduHomeTutor handles verification, demo classes and replacements for you. Call us on 63866 05007 to get started.'],
     ],
   },
   {
@@ -980,7 +1044,7 @@ const tutors = [
     classes: 'Class 9 to B.Com',
   },
   {
-    name: 'Arpit Singh',
+    name: 'Arpita Singh',
     photo: 'arpit-singh.jpg',
     specialty: 'Class 6–10 Specialist',
     qualification: 'MCA',
@@ -996,4 +1060,4 @@ const tutors = [
   },
 ];
 
-module.exports = { SITE, subjects, classes, classGuide, boards, exams, areas, areaAbout, faqs, fees, posts, testimonials, tutors };
+module.exports = { SITE, subjects, classes, classGuide, boards, exams, areas, areaAbout, localities, faqs, fees, posts, testimonials, tutors };

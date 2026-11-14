@@ -63,7 +63,7 @@
       if (!validate(form)) return;
       var d = new FormData(form);
       openWhatsApp([
-        'Hi Education Hub 👋 I would like to book a FREE demo class.',
+        'Hi EduHomeTutor 👋 I would like to book a FREE demo class.',
         '',
         'Name: ' + d.get('name'),
         'Mobile: ' + d.get('phone'),
@@ -82,7 +82,7 @@
       if (!validate(form)) return;
       var d = new FormData(form);
       openWhatsApp([
-        'Hi Education Hub 👋 I want to register as a home tutor.',
+        'Hi EduHomeTutor 👋 I want to register as a home tutor.',
         '',
         'Name: ' + d.get('name'),
         'Mobile: ' + d.get('phone'),
@@ -99,7 +99,7 @@
     form.addEventListener('submit', function (e) {
       e.preventDefault();
       var d = new FormData(form);
-      var lines = ['Hi Education Hub 👋 I am looking for a tutor:'];
+      var lines = ['Hi EduHomeTutor 👋 I am looking for a tutor:'];
       [
         ['area', 'Area'],
         ['class', 'Class'],
@@ -121,7 +121,7 @@
   };
 
   function jobCard(j) {
-    var msg = 'Hi Education Hub 👋 I want to apply for Job ID ' + j.id + ' (' + j.title + ').';
+    var msg = 'Hi EduHomeTutor 👋 I want to apply for Job ID ' + j.id + ' (' + j.title + ').';
     var item = function (label, val, cls) {
       return (
         '<div class="job-live-item"><span class="job-live-label">' +

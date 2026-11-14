@@ -6,7 +6,7 @@ const path = require('path');
 const { homeScene, tutorScene } = require('./illustrations');
 const { subjectArt, classArt, boardArt, examArt, areaArt, postArt, gallery } = require('./art');
 const { icons } = require('./icons');
-const { SITE, subjects, classes, classGuide, boards, exams, areas, areaAbout, faqs, fees, posts, testimonials, tutors } = require('./data');
+const { SITE, subjects, classes, classGuide, boards, exams, areas, areaAbout, localities, faqs, fees, posts, testimonials, tutors } = require('./data');
 
 const SRC = __dirname;
 const DIST = path.join(SRC, '..', 'dist');
@@ -46,7 +46,7 @@ const businessSchema = {
   '@type': ['EducationalOrganization', 'LocalBusiness'],
   '@id': orgId,
   name: SITE.name,
-  alternateName: [SITE.shortName, SITE.domainName],
+  alternateName: SITE.alternateNames,
   slogan: SITE.tagline,
   url: abs('/'),
   logo: abs('/assets/logo-512.jpg'),
@@ -100,7 +100,7 @@ const websiteSchema = {
   url: abs('/'),
   name: SITE.name,
   // Google's "site name" in results reads these; the domain spelling helps people who search for it.
-  alternateName: [SITE.shortName, SITE.domainName],
+  alternateName: SITE.alternateNames,
   inLanguage: SITE.lang,
   publisher: { '@id': orgId },
 };
@@ -210,7 +210,7 @@ function header(current) {
       <div class="tb-col">
         <a href="${tel}" class="contact-link">${fa('fa-phone')} ${SITE.phoneDisplay}</a>
         <span class="tb-sep">|</span>
-        <a href="${wa('Hi Education Hub, I need a home tutor in Lucknow.')}" class="wa-link" target="_blank" rel="noopener">${waIcon} ${SITE.phoneDisplay}</a>
+        <a href="${wa('Hi EduHomeTutor, I need a home tutor in Lucknow.')}" class="wa-link" target="_blank" rel="noopener">${waIcon} ${SITE.phoneDisplay}</a>
       </div>
       <div class="tb-col social-links">${
         social.length
@@ -229,7 +229,7 @@ function header(current) {
   <nav class="main-navbar" id="mainNav" aria-label="Main">
     <div class="tht-container nav-in">
       <a class="navbar-brand" href="/" title="${esc(SITE.name)} — home">
-        <span class="logo-card"><img src="/assets/emblem-112.jpg" width="56" height="42" alt="${esc(SITE.name)} logo" fetchpriority="high"></span>
+        <span class="logo-card"><img src="/assets/emblem-112.jpg" width="58" height="28" alt="${esc(SITE.name)} logo" fetchpriority="high"></span>
         <span class="brand-text"><span class="brand-name">${esc(SITE.name)}</span><span class="brand-tag">Lucknow's Trusted Tutors</span></span>
       </a>
       <a href="/get-tutor/" id="mobile-pill">Get Tutor</a>
@@ -256,7 +256,7 @@ function footer() {
       <div class="ft-logo"><a href="/"><img src="/assets/logo-240.jpg" width="70" height="70" alt="${esc(SITE.name)} logo" loading="lazy" decoding="async"></a></div>
       <div><span class="ft-brand-tagline">${esc(SITE.tagline)}</span></div>
     </div>
-    <a href="${wa('Hi Education Hub, I need a home tutor in Lucknow.')}" class="ft-cta" target="_blank" rel="noopener">${fa('fa-whatsapp')} Get a Tutor Today</a>
+    <a href="${wa('Hi EduHomeTutor, I need a home tutor in Lucknow.')}" class="ft-cta" target="_blank" rel="noopener">${fa('fa-whatsapp')} Get a Tutor Today</a>
   </div>
   <div class="ft-grid" style="max-width:1400px;margin:0 auto;">
     ${col('By Subject', [...subjects.slice(0, 8).map((s) => [`${s.short} Tutor`, `/subjects/${s.slug}/`]), ['All Subjects →', '/subjects/', 'ft-hl']])}
@@ -293,7 +293,7 @@ function footer() {
     <div class="ft-col">
       <h3>Contact Us</h3>
       <p>${fa('fa-phone')} <a href="${tel}">${SITE.phoneDisplay}</a></p>
-      <p>${fa('fa-whatsapp')} <a href="${wa('Hi Education Hub, I need a home tutor in Lucknow.')}" target="_blank" rel="noopener">${SITE.phoneDisplay}</a></p>
+      <p>${fa('fa-whatsapp')} <a href="${wa('Hi EduHomeTutor, I need a home tutor in Lucknow.')}" target="_blank" rel="noopener">${SITE.phoneDisplay}</a></p>
       <p>${fa('fa-location-dot')} <span>${esc(SITE.address.street)}, ${esc(SITE.address.locality)}, ${esc(SITE.address.region)} – ${SITE.address.postalCode}</span></p>
       <p>${fa('fa-envelope')} <a href="mailto:${SITE.email}">${SITE.email}</a></p>
       <p class="ft-hours">${fa('fa-clock')} ${esc(SITE.hoursDisplay)}</p>
@@ -310,7 +310,7 @@ function footer() {
     </ul>
   </div>
 </footer>
-<div class="gotopbtn"><a href="${wa('Hi Education Hub, I need a home tutor in Lucknow.')}" target="_blank" rel="noopener" aria-label="Chat on WhatsApp"><svg viewBox="0 0 32 32" width="30" height="30" aria-hidden="true"><path fill="#fff" d="M16 3a13 13 0 0 0-11.2 19.6L3 29l6.6-1.7A13 13 0 1 0 16 3zm0 23.7c-2 0-4-.6-5.7-1.6l-.4-.2-3.9 1 1-3.8-.3-.4A10.7 10.7 0 1 1 16 26.7zm5.9-8c-.3-.2-1.9-1-2.2-1-.3-.1-.5-.2-.7.1l-1 1.2c-.2.2-.4.3-.7.1a8.8 8.8 0 0 1-4.4-3.8c-.3-.6.3-.5 1-1.7.1-.2 0-.4 0-.6l-1-2.4c-.3-.6-.5-.5-.7-.5h-.6c-.2 0-.6.1-.9.4-.3.3-1.2 1.1-1.2 2.8s1.2 3.2 1.4 3.5c.2.2 2.4 3.6 5.8 5 2.1.9 3 1 4 .8.7-.1 1.9-.8 2.2-1.5.3-.7.3-1.4.2-1.5l-.6-.4z"/></svg></a></div>
+<div class="gotopbtn"><a href="${wa('Hi EduHomeTutor, I need a home tutor in Lucknow.')}" target="_blank" rel="noopener" aria-label="Chat on WhatsApp"><svg viewBox="0 0 32 32" width="30" height="30" aria-hidden="true"><path fill="#fff" d="M16 3a13 13 0 0 0-11.2 19.6L3 29l6.6-1.7A13 13 0 1 0 16 3zm0 23.7c-2 0-4-.6-5.7-1.6l-.4-.2-3.9 1 1-3.8-.3-.4A10.7 10.7 0 1 1 16 26.7zm5.9-8c-.3-.2-1.9-1-2.2-1-.3-.1-.5-.2-.7.1l-1 1.2c-.2.2-.4.3-.7.1a8.8 8.8 0 0 1-4.4-3.8c-.3-.6.3-.5 1-1.7.1-.2 0-.4 0-.6l-1-2.4c-.3-.6-.5-.5-.7-.5h-.6c-.2 0-.6.1-.9.4-.3.3-1.2 1.1-1.2 2.8s1.2 3.2 1.4 3.5c.2.2 2.4 3.6 5.8 5 2.1.9 3 1 4 .8.7-.1 1.9-.8 2.2-1.5.3-.7.3-1.4.2-1.5l-.6-.4z"/></svg></a></div>
 <div class="gotopbtn-2" id="gotopbtn-2"><a href="${tel}" aria-label="Call ${SITE.phoneDisplay}"><svg viewBox="0 0 24 24" width="26" height="26" aria-hidden="true"><path fill="#fff" d="M6.6 10.8a15.1 15.1 0 0 0 6.6 6.6l2.2-2.2c.3-.3.7-.4 1-.2 1.1.4 2.3.6 3.6.6.6 0 1 .4 1 1V20c0 .6-.4 1-1 1A17 17 0 0 1 3 4c0-.6.4-1 1-1h3.5c.6 0 1 .4 1 1 0 1.3.2 2.5.6 3.6.1.3 0 .7-.2 1z"/></svg></a></div>`;
 }
 
@@ -393,7 +393,7 @@ const finalCta = `
           <div class="tht-cta__stat-item"><div class="tht-cta__stat-num">24hr</div><div class="tht-cta__stat-lbl">Tutor Match</div></div>
         </div>
         <div class="tht-cta__btns" style="margin-top:2rem;">
-          <a href="${wa('Hi Education Hub 👋 I would like to book a free demo class.')}" target="_blank" rel="noopener" class="tht-cta-btn-primary">${fa('fa-whatsapp')} Book Free Demo Now</a>
+          <a href="${wa('Hi EduHomeTutor 👋 I would like to book a free demo class.')}" target="_blank" rel="noopener" class="tht-cta-btn-primary">${fa('fa-whatsapp')} Book Free Demo Now</a>
           <a href="${tel}" class="tht-cta-btn-secondary">${fa('fa-phone')} Call: ${SITE.phoneDisplay}</a>
         </div>
         <div class="tht-cta__trust">
@@ -493,7 +493,7 @@ const tutorsBlock = (area) => {
   ]
     .filter(Boolean)
     .join('')}</div>
-  <div class="tnt-card__footer"><a class="tnt-card__btn" href="${wa(`Hi Education Hub 👋 I'd like a free demo with ${t.name}${t.subjects ? ` (${t.subjects})` : ''}.`)}" target="_blank" rel="noopener">Book Free Demo ${fa('fa-arrow-right')}</a></div>
+  <div class="tnt-card__footer"><a class="tnt-card__btn" href="${wa(`Hi EduHomeTutor 👋 I'd like a free demo with ${t.name}${t.subjects ? ` (${t.subjects})` : ''}.`)}" target="_blank" rel="noopener">Book Free Demo ${fa('fa-arrow-right')}</a></div>
 </article>`,
       )
       .join('')}</div></div></div>
@@ -656,10 +656,10 @@ function heroBlock(h1, description, { badge, accent, checks, form, side, sub, fo
         ['🛡️ Every tutor', 'ID-verified'],
       ];
   const waText = forTutors
-    ? 'Hi Education Hub 👋 I want to register as a home tutor.'
+    ? 'Hi EduHomeTutor 👋 I want to register as a home tutor.'
     : form
-      ? `Hi Education Hub 👋 I need a tutor (${form}).`
-      : 'Hi Education Hub 👋 I need a home tutor in Lucknow.';
+      ? `Hi EduHomeTutor 👋 I need a tutor (${form}).`
+      : 'Hi EduHomeTutor 👋 I need a home tutor in Lucknow.';
   return `
 <section class="ip-hero${right ? '' : ' ip-hero--solo'}" style="--t:${accent}">
   <div class="tht-container ip-hero__grid">
@@ -680,7 +680,7 @@ function heroBlock(h1, description, { badge, accent, checks, form, side, sub, fo
 }
 
 // Side column on detail pages, now that the form lives in the hero.
-const sideCard = (art, name, message = `Hi Education Hub 👋 I need a ${name} tutor.`) => `
+const sideCard = (art, name, message = `Hi EduHomeTutor 👋 I need a ${name} tutor.`) => `
 <aside class="sticky ip-side">
   <div class="ip-side__art">${art}</div>
   <ul class="ip-side__list">
@@ -970,7 +970,7 @@ ${tutorsBlock()}
       </div>
       <div class="jobs-cta-btns">
         <a href="/become-a-tutor/" class="jobs-cta-primary">${fa('fa-user-plus')} Register as Tutor →</a>
-        <a href="${wa('Hi Education Hub 👋 I am looking for tuition jobs in Lucknow. Please share available jobs in my area.')}" target="_blank" rel="noopener" class="jobs-cta-wa">${fa('fa-whatsapp')} Get Jobs on WhatsApp</a>
+        <a href="${wa('Hi EduHomeTutor 👋 I am looking for tuition jobs in Lucknow. Please share available jobs in my area.')}" target="_blank" rel="noopener" class="jobs-cta-wa">${fa('fa-whatsapp')} Get Jobs on WhatsApp</a>
       </div>
     </div>
   </div>
@@ -1070,7 +1070,7 @@ ${steps}
     <p>Searching for a <strong>home tutor near me in Lucknow</strong> usually means calling a dozen numbers and hoping someone reliable turns up. ${esc(SITE.name)} makes it simple: one call or WhatsApp message to <a href="${tel}">${SITE.phoneDisplay}</a>, and we shortlist a verified tutor who suits your child's class, board, subjects and timing.</p>
     <p>We arrange <a href="/classes/">home tuition for every class</a> — from <a href="/classes/nursery/">nursery</a> and <a href="/classes/ukg/">UKG</a> to <a href="/classes/class-10/">Class 10</a> and <a href="/classes/class-12/">Class 12</a> — across <a href="/boards/cbse/">CBSE</a>, <a href="/boards/icse/">ICSE</a>, <a href="/boards/up-board/">UP Board</a>, <a href="/boards/ib/">IB</a> and <a href="/boards/igcse/">IGCSE</a>. Senior students get dedicated <a href="/exams/jee/">JEE</a>, <a href="/exams/neet/">NEET</a> and <a href="/exams/cuet/">CUET</a> tutors, and adults can join one-to-one <a href="/subjects/spoken-english/">spoken English</a> classes.</p>
     <p>Our office is at ${esc(addressLine)}, close to Sitapur Road, Aliganj and Kapoorthala, and our tutors travel across the city — <a href="/areas/gomti-nagar/">Gomti Nagar</a>, <a href="/areas/indira-nagar/">Indira Nagar</a>, <a href="/areas/jankipuram/">Jankipuram</a>, <a href="/areas/mahanagar/">Mahanagar</a>, <a href="/areas/alambagh/">Alambagh</a>, <a href="/areas/ashiyana/">Ashiyana</a> and <a href="/areas/">many more areas</a>.</p>
-    <p lang="hi"><strong>लखनऊ में होम ट्यूटर चाहिए?</strong> Education Hub आपके घर पर अनुभवी और वेरिफाइड ट्यूटर भेजता है — कक्षा 1 से 12, CBSE, ICSE, UP Board, JEE और NEET के लिए। पहली डेमो क्लास बिल्कुल फ्री है। कॉल या WhatsApp करें: ${SITE.phoneDisplay}।</p>
+    <p lang="hi"><strong>लखनऊ में होम ट्यूटर चाहिए?</strong> EduHomeTutor आपके घर पर अनुभवी और वेरिफाइड ट्यूटर भेजता है — कक्षा 1 से 12, CBSE, ICSE, UP Board, JEE और NEET के लिए। पहली डेमो क्लास बिल्कुल फ्री है। कॉल या WhatsApp करें: ${SITE.phoneDisplay}।</p>
   </div>
 </section>
 
@@ -1086,7 +1086,7 @@ ${finalCta}
 page({
   url: '/subjects/',
   current: '/subjects/',
-  title: 'Subject-wise Home Tutors in Lucknow | Education Hub',
+  title: 'Subject-wise Home Tutors in Lucknow | EduHomeTutor',
   description:
     'Hire expert home tutors in Lucknow for Maths, Physics, Chemistry, Biology, English, Hindi, Computer Science, Accounts and more. Free demo class.',
   h1: 'Explore all <span class="h1-hl">subjects</span> in Lucknow',
@@ -1128,7 +1128,7 @@ for (const [i, s] of subjects.entries()) {
   page({
     url,
     current: '/subjects/',
-    title: fitTitle(`${s.name} Home Tutor in Lucknow | Free Demo | Education Hub`, `${s.name} Home Tutor in Lucknow | Education Hub`),
+    title: fitTitle(`${s.name} Home Tutor in Lucknow | Free Demo | EduHomeTutor`, `${s.name} Home Tutor in Lucknow | EduHomeTutor`),
     description: clip(`Verified ${s.name} home tutors in Lucknow for all classes and boards. ${s.blurb} Book a free demo class today.`),
     h1: `<span class="h1-hl">${s.name}</span> home tutor in Lucknow`,
     hero: {
@@ -1229,7 +1229,7 @@ for (const [i, c] of classes.entries()) {
   page({
     url,
     current: '/classes/',
-    title: fitTitle(`${c.name} Home Tutor in Lucknow | Free Demo | Education Hub`, `${c.name} Home Tutor in Lucknow | Education Hub`),
+    title: fitTitle(`${c.name} Home Tutor in Lucknow | Free Demo | EduHomeTutor`, `${c.name} Home Tutor in Lucknow | EduHomeTutor`),
     description: clip(`Experienced ${c.name} home tutors in Lucknow. ${c.focus} Free demo class at home.`),
     h1: `<span class="h1-hl">${c.name}</span> home tutor in Lucknow`,
     hero: {
@@ -1278,7 +1278,7 @@ for (const [i, b] of boards.entries()) {
   page({
     url,
     current: '/classes/',
-    title: fitTitle(`${b.name} Home Tutors in Lucknow | Free Demo | Education Hub`, `${b.name} Home Tutors in Lucknow | Education Hub`),
+    title: fitTitle(`${b.name} Home Tutors in Lucknow | Free Demo | EduHomeTutor`, `${b.name} Home Tutors in Lucknow | EduHomeTutor`),
     description: `Experienced ${b.name} home tutors in Lucknow for all classes and subjects. Board-focused teaching, regular tests and a free demo class.`,
     h1: `<span class="h1-hl">${b.name}</span> home tutors in Lucknow`,
     hero: {
@@ -1332,7 +1332,7 @@ for (const [i, e] of exams.entries()) {
   page({
     url,
     current: '/classes/',
-    title: fitTitle(`${e.short} Home Tutor in Lucknow | One-to-One | Education Hub`, `${e.short} Home Tutor in Lucknow | Education Hub`),
+    title: fitTitle(`${e.short} Home Tutor in Lucknow | One-to-One | EduHomeTutor`, `${e.short} Home Tutor in Lucknow | EduHomeTutor`),
     description: `One-to-one ${e.name} home coaching in Lucknow for ${e.subjects}. Personal study plans, mock tests and daily doubt-solving. Free demo.`.slice(
       0,
       158,
@@ -1370,10 +1370,39 @@ ${finalCta}`,
 
 // ---------- Areas ----------
 
+// Localities with their own page link to it; the rest open WhatsApp with the locality already in the message.
+const localityGroups = Object.entries(
+  [
+    ...areas.map((a) => ({ name: a.name, href: `/areas/${a.slug}/` })),
+    ...localities.map((name) => ({ name, href: wa(`Hi EduHomeTutor 👋 I need a home tutor in ${name}, Lucknow.`) })),
+  ]
+    .sort((x, y) => x.name.localeCompare(y.name))
+    .reduce((groups, l) => ({ ...groups, [l.name[0]]: [...(groups[l.name[0]] || []), l] }), {}),
+);
+const localityDirectory = `
+<section class="tht-section loc-dir" aria-labelledby="loc-dir-h"><div class="tht-container">
+  ${secHead('loc-dir-h', 'All Localities', 'Browse all', 'sub-localities', `Home tutors across ${localityGroups.reduce((n, [, list]) => n + list.length, 0)} Lucknow localities, from A to Z.`)}
+  <nav class="loc-dir__jump" aria-label="Jump to letter">${localityGroups.map(([letter]) => `<a href="#loc-${letter}">${letter}</a>`).join('')}</nav>
+  ${localityGroups
+    .map(
+      ([letter, list]) => `
+  <div class="loc-dir__group" id="loc-${letter}">
+    <div class="loc-dir__head"><span class="loc-dir__letter">${letter}</span><div><h3>${letter} - Areas</h3><p>${list.length} ${list.length === 1 ? 'location' : 'locations'}</p></div></div>
+    <ul class="loc-dir__list">${list
+      .map((l) => {
+        const external = l.href.startsWith('https://');
+        return `<li><a class="loc-dir__item${external ? '' : ' loc-dir__item--page'}" href="${esc(l.href)}"${external ? ' target="_blank" rel="noopener"' : ''}>${fa(external ? 'fa-location-dot' : 'fa-arrow-right')}<span>${esc(l.name)}</span></a></li>`;
+      })
+      .join('')}</ul>
+  </div>`,
+    )
+    .join('')}
+</div></section>`;
+
 page({
   url: '/areas/',
   current: '/areas/',
-  title: 'Home Tutors Near Me in Lucknow | All Areas | Education Hub',
+  title: 'Home Tutors Near Me in Lucknow | All Areas | EduHomeTutor',
   description: 'Find a home tutor near you in Lucknow — Triveni Nagar, Aliganj, Gomti Nagar, Indira Nagar, Jankipuram, Mahanagar, Alambagh and more.',
   h1: 'Find tutors in your <span class="h1-hl">exact locality</span>',
   hero: {
@@ -1391,7 +1420,7 @@ page({
     ['Home', '/'],
     ['Areas', '/areas/'],
   ],
-  body: `<section class="tht-section" aria-labelledby="all-area-h"><div class="tht-container">${secHead('all-area-h', 'Service Areas', 'Home tutors available', 'across Lucknow', 'Don\'t see your area? We cover most of Lucknow — <a href="/contact/">just ask</a>.')}${areaChips()}</div></section>${steps}${finalCta}`,
+  body: `<section class="tht-section" aria-labelledby="all-area-h"><div class="tht-container">${secHead('all-area-h', 'Service Areas', 'Home tutors available', 'across Lucknow', 'Don\'t see your area? We cover most of Lucknow — <a href="/contact/">just ask</a>.')}${areaChips()}</div></section>${localityDirectory}${steps}${finalCta}`,
 });
 
 for (const [i, a] of areas.entries()) {
@@ -1421,7 +1450,7 @@ for (const [i, a] of areas.entries()) {
   page({
     url,
     current: '/areas/',
-    title: fitTitle(`Home Tutor in ${a.name}, Lucknow | Free Demo | Education Hub`, `Home Tutor in ${a.name}, Lucknow | Education Hub`),
+    title: fitTitle(`Home Tutor in ${a.name}, Lucknow | Free Demo | EduHomeTutor`, `Home Tutor in ${a.name}, Lucknow | EduHomeTutor`),
     description: `Verified home tutors in ${a.name}, Lucknow for Class 1–12, CBSE, ICSE, UP Board, JEE & NEET. Female & male tutors. Free demo within 24 hours.`,
     h1: `Home tutor in <span class="h1-hl">${a.name}</span>, Lucknow`,
     hero: {
@@ -1466,7 +1495,7 @@ ${finalCta}`,
 
 // FAQs for the tutor-facing and contact pages: only facts already stated elsewhere on the site.
 const tutorFaqs = [
-  { q: 'Is there a fee to register as a tutor?', a: 'No. Registering with Education Hub Home Tutors is free.' },
+  { q: 'Is there a fee to register as a tutor?', a: 'No. Registering with EduHomeTutor is free.' },
   {
     q: 'Who can become a home tutor with you?',
     a: 'Graduates, postgraduates, B.Ed / D.El.Ed holders, working teachers and subject experts living in Lucknow. College students with strong subject knowledge can apply for primary and middle classes.',
@@ -1504,9 +1533,8 @@ const contactFaqs = [
 page({
   url: '/about/',
   current: '/about/',
-  title: 'About Us | Education Hub Home Tutors, Lucknow',
-  description:
-    'Education Hub Home Tutors connects Lucknow families with verified, experienced home tutors. Learn about our story, values and how we choose tutors.',
+  title: 'About Us | EduHomeTutor, Lucknow',
+  description: 'EduHomeTutor connects Lucknow families with verified, experienced home tutors. Learn about our story, values and how we choose tutors.',
   h1: 'We connect students with the <span class="h1-hl">right tutor</span>',
   hero: {
     badge: 'About us · Triveni Nagar, Lucknow',
@@ -1523,7 +1551,7 @@ page({
 <section class="sec"><div class="wrap split">
   <article class="prose">
     <h2>Our story</h2>
-    <p>Education Hub Home Tutors started in Triveni Nagar, Lucknow with a simple idea: finding a good tutor shouldn't depend on luck or on who your neighbour knows. Parents deserve a reliable way to find someone qualified, safe and genuinely invested in their child's progress.</p>
+    <p>EduHomeTutor started in Triveni Nagar, Lucknow with a simple idea: finding a good tutor shouldn't depend on luck or on who your neighbour knows. Parents deserve a reliable way to find someone qualified, safe and genuinely invested in their child's progress.</p>
     <p>Today we work with teachers and subject experts across Lucknow — from patient pre-primary educators to senior JEE and NEET faculty — and match them carefully with families who need them.</p>
     <h2>What we believe</h2>
     <ul class="ticks">
@@ -1573,9 +1601,9 @@ ${faqBlock(faqs)}`,
 page({
   url: '/become-a-tutor/',
   current: '/become-a-tutor/',
-  title: 'Become a Home Tutor in Lucknow | Education Hub',
+  title: 'Become a Home Tutor in Lucknow | EduHomeTutor',
   description:
-    'Join Education Hub as a home tutor in Lucknow. Get tuition leads near your home, flexible timings and timely payments. Register free on WhatsApp.',
+    'Join EduHomeTutor as a home tutor in Lucknow. Get tuition leads near your home, flexible timings and timely payments. Register free on WhatsApp.',
   h1: 'Become a <span class="h1-hl">home tutor</span> in Lucknow',
   hero: {
     badge: 'Free registration · Tutors wanted',
@@ -1610,7 +1638,7 @@ page({
     </ol>
     <p>Already registered? See <a href="/tuition-jobs/">current tuition jobs</a>.</p>
   </article>
-  ${sideCard(tutorScene, 'tutoring job', 'Hi Education Hub 👋 I want to register as a home tutor.')}
+  ${sideCard(tutorScene, 'tutoring job', 'Hi EduHomeTutor 👋 I want to register as a home tutor.')}
 </div></section>
 ${faqBlock(tutorFaqs, 'Becoming a tutor — FAQs')}`,
 });
@@ -1639,7 +1667,7 @@ page({
   <div class="empty" id="jobs-empty" hidden>
     <h2>New tuition jobs every week</h2>
     <p>Fresh requirements come in daily. Register as a tutor and we'll send matching jobs in your area straight to WhatsApp.</p>
-    <p><a class="btn btn--primary" href="/become-a-tutor/">Register as Tutor</a> <a class="btn btn--outline" href="${wa('Hi Education Hub, I am a tutor looking for tuition jobs in Lucknow. Please share jobs in my area.')}" target="_blank" rel="noopener">Get Jobs on WhatsApp</a></p>
+    <p><a class="btn btn--primary" href="/become-a-tutor/">Register as Tutor</a> <a class="btn btn--outline" href="${wa('Hi EduHomeTutor, I am a tutor looking for tuition jobs in Lucknow. Please share jobs in my area.')}" target="_blank" rel="noopener">Get Jobs on WhatsApp</a></p>
   </div>
 </div></section>
 ${faqBlock(jobFaqs, 'Tuition jobs — FAQs')}`,
@@ -1648,7 +1676,7 @@ ${faqBlock(jobFaqs, 'Tuition jobs — FAQs')}`,
 page({
   url: '/fees/',
   current: '/fees/',
-  title: `Home Tuition Fees in Lucknow ${BUILD_DATE.slice(0, 4)} | Education Hub`,
+  title: `Home Tuition Fees in Lucknow ${BUILD_DATE.slice(0, 4)} | EduHomeTutor`,
   description:
     'Transparent home tuition fees in Lucknow for Play Group to Class 12, JEE, NEET and Spoken English. Typical monthly ranges and what affects the price.',
   h1: 'Transparent <span class="h1-hl">home tuition fees</span> in Lucknow',
@@ -1682,7 +1710,7 @@ ${finalCta}`,
 page({
   url: '/contact/',
   current: '/contact/',
-  title: 'Contact Education Hub Home Tutors | Triveni Nagar, Lucknow',
+  title: 'Contact EduHomeTutor | Triveni Nagar, Lucknow',
   description: `Call ${SITE.phoneDisplay} or visit us at ${addressLine}. Open ${SITE.hoursDisplay}.`,
   h1: 'Let\'s <span class="h1-hl">connect</span>',
   hero: {
@@ -1702,7 +1730,7 @@ page({
     <h2>Talk to us</h2>
     <ul class="contact">
       <li><span>📞</span><div><b>Phone</b><a href="${tel}">${SITE.phoneDisplay}</a></div></li>
-      <li><span>💬</span><div><b>WhatsApp</b><a href="${wa('Hi Education Hub!')}" target="_blank" rel="noopener">Chat with us</a></div></li>
+      <li><span>💬</span><div><b>WhatsApp</b><a href="${wa('Hi EduHomeTutor!')}" target="_blank" rel="noopener">Chat with us</a></div></li>
       <li><span>✉️</span><div><b>Email</b><a href="mailto:${SITE.email}">${SITE.email}</a></div></li>
       <li><span>📍</span><div><b>Office</b><address>${esc(addressLine)}</address></div></li>
       <li><span>🕘</span><div><b>Hours</b>${SITE.hoursDisplay}</div></li>
@@ -1719,8 +1747,8 @@ ${faqBlock(contactFaqs, 'Contact — FAQs')}`,
 page({
   url: '/blog/',
   current: '/blog/',
-  title: 'Study Tips & Parenting Guides | Education Hub Blog',
-  description: 'Practical study tips, board exam plans and guides for Lucknow parents choosing a home tutor — written by the Education Hub Home Tutors team.',
+  title: 'Study Tips & Parenting Guides | EduHomeTutor Blog',
+  description: 'Practical study tips, board exam plans and guides for Lucknow parents choosing a home tutor — written by the EduHomeTutor team.',
   h1: 'Home tuition <span class="h1-hl">guides</span> for Lucknow families',
   hero: {
     badge: 'Blog · Study tips &amp; guides',
@@ -1754,7 +1782,7 @@ for (const [i, p] of posts.entries()) {
     current: '/blog/',
     ogType: 'article',
     lastmod: p.date,
-    title: fitTitle(`${p.seoTitle || p.title} | Education Hub`, p.seoTitle || p.title),
+    title: fitTitle(`${p.seoTitle || p.title} | EduHomeTutor`, p.seoTitle || p.title),
     description: p.description,
     image: cover,
     crumbs: [
@@ -1808,7 +1836,7 @@ const legal = {
   'terms-conditions': [
     'Terms & Conditions',
     [
-      ['Our role', 'Education Hub Home Tutors connects parents and students with independent tutors. Tutors are not our employees.'],
+      ['Our role', 'EduHomeTutor connects parents and students with independent tutors. Tutors are not our employees.'],
       ['Demo class', 'The first demo class is free. Regular classes begin only after both sides agree.'],
       ['Fees', 'Fees are agreed before classes begin and are paid monthly in advance unless otherwise agreed.'],
       ['Conduct', 'Parents and tutors are expected to treat each other with respect. We may remove any tutor or decline any request at our discretion.'],

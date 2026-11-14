@@ -1,8 +1,8 @@
 {
-  "name": "education-hub-home-tutors",
+  "name": "eduhometutor",
   "version": "1.0.0",
   "private": true,
-  "description": "Education Hub Home Tutors — static, SEO-first website for home tuition in Lucknow",
+  "description": "EduHomeTutor — static, SEO-first website for home tuition in Lucknow",
   "scripts": {
     "build": "node src/build.js",
     "start": "node src/build.js && npx --yes serve dist -l 4321",
