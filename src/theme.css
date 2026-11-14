@@ -2742,10 +2742,6 @@ button {
   background: var(--blue-50);
   color: var(--gold);
 }
-.loc-dir__item--page {
-  background: #fffbeb;
-  border-color: var(--gold-light);
-}
 
 /* FAQ */
 .tht-faq-wrap {

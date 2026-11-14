@@ -3,7 +3,7 @@ const assert = require('node:assert');
 const { execFileSync } = require('node:child_process');
 const fs = require('node:fs');
 const path = require('node:path');
-const { SITE, subjects, classes, areas, localities, tutors } = require('../src/data');
+const { SITE, subjects, classes, areas, tutors } = require('../src/data');
 
 const DIST = path.join(__dirname, '..', 'dist');
 let pages = [];
@@ -177,13 +177,13 @@ test('the brand name matches the domain on every page', () => {
   for (const f of ['llms.txt', 'site.webmanifest']) assert.ok(!/Education Hub/i.test(fs.readFileSync(path.join(DIST, f), 'utf8')), f);
 });
 
-test('the areas page lists every locality A to Z and links those with their own page', () => {
+test('the areas page lists every locality A to Z, each linking to its own page', () => {
   const html = fs.readFileSync(path.join(DIST, 'areas', 'index.html'), 'utf8');
   const names = [...html.matchAll(/class="loc-dir__item[^"]*"[^>]*>.*?<span>(.*?)<\/span>/g)].map((m) => m[1].replace(/&amp;/g, '&'));
-  assert.strictEqual(names.length, localities.length + areas.length);
+  assert.strictEqual(names.length, areas.length);
   assert.deepStrictEqual(
     names,
     [...names].sort((x, y) => x.localeCompare(y)),
   );
-  for (const a of areas) assert.match(html, new RegExp(`href="/areas/${a.slug}/"><svg[^]*?<span>${a.name}</span>`), a.slug);
+  for (const a of areas) assert.match(html, new RegExp(`class="loc-dir__item" href="/areas/${a.slug}/"><svg[^]*?<span>${a.name}</span>`), a.slug);
 });

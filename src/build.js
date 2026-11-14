@@ -6,7 +6,7 @@ const path = require('path');
 const { homeScene, tutorScene } = require('./illustrations');
 const { subjectArt, classArt, boardArt, examArt, areaArt, postArt, gallery } = require('./art');
 const { icons } = require('./icons');
-const { SITE, subjects, classes, classGuide, boards, exams, areas, areaAbout, localities, faqs, fees, posts, testimonials, tutors } = require('./data');
+const { SITE, subjects, classes, classGuide, boards, exams, areas, areaAbout, faqs, fees, posts, testimonials, tutors } = require('./data');
 
 const SRC = __dirname;
 const DIST = path.join(SRC, '..', 'dist');
@@ -314,7 +314,11 @@ function footer() {
 <div class="gotopbtn-2" id="gotopbtn-2"><a href="${tel}" aria-label="Call ${SITE.phoneDisplay}"><svg viewBox="0 0 24 24" width="26" height="26" aria-hidden="true"><path fill="#fff" d="M6.6 10.8a15.1 15.1 0 0 0 6.6 6.6l2.2-2.2c.3-.3.7-.4 1-.2 1.1.4 2.3.6 3.6.6.6 0 1 .4 1 1V20c0 .6-.4 1-1 1A17 17 0 0 1 3 4c0-.6.4-1 1-1h3.5c.6 0 1 .4 1 1 0 1.3.2 2.5.6 3.6.1.3 0 .7-.2 1z"/></svg></a></div>`;
 }
 
-const areaOptions = () => areas.map((a) => `<option>${esc(a.name)}</option>`).join('') + '<option>Other area in Lucknow</option>';
+const areaOptions = () =>
+  [...areas]
+    .sort((x, y) => x.name.localeCompare(y.name))
+    .map((a) => `<option>${esc(a.name)}</option>`)
+    .join('') + '<option>Other area in Lucknow</option>';
 
 const classOptions = () => classes.map((c) => `<option>${esc(c.name)}</option>`).join('');
 
@@ -1370,30 +1374,19 @@ ${finalCta}`,
 
 // ---------- Areas ----------
 
-// Localities with their own page link to it; the rest open WhatsApp with the locality already in the message.
 const localityGroups = Object.entries(
-  [
-    ...areas.map((a) => ({ name: a.name, href: `/areas/${a.slug}/` })),
-    ...localities.map((name) => ({ name, href: wa(`Hi EduHomeTutor 👋 I need a home tutor in ${name}, Lucknow.`) })),
-  ]
-    .sort((x, y) => x.name.localeCompare(y.name))
-    .reduce((groups, l) => ({ ...groups, [l.name[0]]: [...(groups[l.name[0]] || []), l] }), {}),
+  [...areas].sort((x, y) => x.name.localeCompare(y.name)).reduce((groups, a) => ({ ...groups, [a.name[0]]: [...(groups[a.name[0]] || []), a] }), {}),
 );
 const localityDirectory = `
 <section class="tht-section loc-dir" aria-labelledby="loc-dir-h"><div class="tht-container">
-  ${secHead('loc-dir-h', 'All Localities', 'Browse all', 'sub-localities', `Home tutors across ${localityGroups.reduce((n, [, list]) => n + list.length, 0)} Lucknow localities, from A to Z.`)}
+  ${secHead('loc-dir-h', 'All Localities', 'Browse all', 'sub-localities', `Home tutors across ${areas.length} Lucknow localities, from A to Z.`)}
   <nav class="loc-dir__jump" aria-label="Jump to letter">${localityGroups.map(([letter]) => `<a href="#loc-${letter}">${letter}</a>`).join('')}</nav>
   ${localityGroups
     .map(
       ([letter, list]) => `
   <div class="loc-dir__group" id="loc-${letter}">
     <div class="loc-dir__head"><span class="loc-dir__letter">${letter}</span><div><h3>${letter} - Areas</h3><p>${list.length} ${list.length === 1 ? 'location' : 'locations'}</p></div></div>
-    <ul class="loc-dir__list">${list
-      .map((l) => {
-        const external = l.href.startsWith('https://');
-        return `<li><a class="loc-dir__item${external ? '' : ' loc-dir__item--page'}" href="${esc(l.href)}"${external ? ' target="_blank" rel="noopener"' : ''}>${fa(external ? 'fa-location-dot' : 'fa-arrow-right')}<span>${esc(l.name)}</span></a></li>`;
-      })
-      .join('')}</ul>
+    <ul class="loc-dir__list">${list.map((a) => `<li><a class="loc-dir__item" href="/areas/${a.slug}/">${fa('fa-location-dot')}<span>${esc(a.name)}</span></a></li>`).join('')}</ul>
   </div>`,
     )
     .join('')}
@@ -1420,7 +1413,7 @@ page({
     ['Home', '/'],
     ['Areas', '/areas/'],
   ],
-  body: `<section class="tht-section" aria-labelledby="all-area-h"><div class="tht-container">${secHead('all-area-h', 'Service Areas', 'Home tutors available', 'across Lucknow', 'Don\'t see your area? We cover most of Lucknow — <a href="/contact/">just ask</a>.')}${areaChips()}</div></section>${localityDirectory}${steps}${finalCta}`,
+  body: `<section class="tht-section" aria-labelledby="all-area-h"><div class="tht-container">${secHead('all-area-h', 'Service Areas', 'Home tutors available', 'across Lucknow', 'Don\'t see your area? We cover most of Lucknow — <a href="/contact/">just ask</a>.')}${areaChips(areas.slice(0, 12))}</div></section>${localityDirectory}${steps}${finalCta}`,
 });
 
 for (const [i, a] of areas.entries()) {
