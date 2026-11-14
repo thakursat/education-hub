@@ -1901,6 +1901,8 @@ fs.writeFileSync(
     .replace('__ICON_WHATSAPP__', fa('fa-whatsapp')),
 );
 fs.copyFileSync(path.join(SRC, 'jobs.json'), path.join(DIST, 'jobs.json'));
+// Google Search Console ownership file: must stay at the site root, even after verification.
+fs.copyFileSync(path.join(SRC, 'google6873b32acf198796.html'), path.join(DIST, 'google6873b32acf198796.html'));
 
 // lastmod only where we know when the content changed (blog posts); a build date on every page teaches Google to ignore it.
 const sitemapUrls = pages.filter((p) => !p.noindex);

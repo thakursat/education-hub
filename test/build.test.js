@@ -13,7 +13,7 @@ before(() => {
   const walk = (dir) =>
     fs.readdirSync(dir).flatMap((f) => {
       const p = path.join(dir, f);
-      return fs.statSync(p).isDirectory() ? walk(p) : p.endsWith('.html') ? [p] : [];
+      return fs.statSync(p).isDirectory() ? walk(p) : p.endsWith('.html') && !f.startsWith('google') ? [p] : [];
     });
   pages = walk(DIST).map((file) => ({ file, html: fs.readFileSync(file, 'utf8') }));
 });
@@ -186,4 +186,8 @@ test('the areas page lists every locality A to Z, each linking to its own page',
     [...names].sort((x, y) => x.localeCompare(y)),
   );
   for (const a of areas) assert.match(html, new RegExp(`class="loc-dir__item" href="/areas/${a.slug}/"><svg[^]*?<span>${a.name}</span>`), a.slug);
+});
+
+test('publishes the Google Search Console verification file at the site root', () => {
+  assert.strictEqual(fs.readFileSync(path.join(DIST, 'google6873b32acf198796.html'), 'utf8').trim(), 'google-site-verification: google6873b32acf198796.html');
 });

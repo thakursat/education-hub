@@ -1,3 +1,5 @@
 dist/
 node_modules/
 package-lock.json
+# Google Search Console verification: must stay byte-for-byte as Google issued it.
+src/google*.html
